@@ -26,7 +26,11 @@ class BLE_manager(
 ){
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
-     var bluetoothGatt: BluetoothGatt? = null
+    val envService_UUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB")
+    val temp_UUID = UUID.fromString("00002A6E-0000-1000-8000-00805F9B34FB")
+    val humidity_UUID = UUID.fromString("00002A6F-0000-1000-8000-00805F9B34FB")
+
+    var bluetoothGatt: BluetoothGatt? = null
 
     var ble_scanResults = mutableStateListOf<ScanResult>()
 
@@ -44,6 +48,7 @@ class BLE_manager(
                 scanning = false
                 bluetoothLeScanner.stopScan(leScanCallback)
             }, SCAN_PERIOD)
+            ble_scanResults.clear()
             scanning = true
             bluetoothLeScanner?.startScan(leScanCallback)
         } else {
@@ -68,13 +73,27 @@ class BLE_manager(
             }
         }
     }
-
-    @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT permission needed here
-     fun connectToDevice(device: BluetoothDevice, connectionState: MutableState<String>, onDataReceived: (Int) -> Unit ) {
-        // Disconnect from any previously connected device
+    fun closeConnection()
+    {
         bluetoothGatt?.close()
         bluetoothGatt = null
+    }
+    @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT permission needed here
+     fun connectToDevice(device: BluetoothDevice, connectionState: MutableState<String>, onDataReceived: (BluetoothGattCharacteristic,Int) -> Unit ) {
+        // Disconnect from any previously connected device
+       closeConnection()
 
+        var gattQueue = mutableListOf<() ->Unit>()
+        var gattQueueBusy = false
+
+        fun nextGattOperation()
+        {
+            if(!gattQueue.isEmpty() && !gattQueueBusy)
+            {
+                gattQueueBusy = true
+                gattQueue.removeAt(0).invoke()
+            }
+        }
         // Attempt to connect to the GATT server
         bluetoothGatt = device.connectGatt(context, false, object : BluetoothGattCallback() {
             // Callback for connection state changes
@@ -101,39 +120,42 @@ class BLE_manager(
                 super.onServicesDiscovered(gatt, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d("GATT_CONN", "Services discovered successfully.")
-                    // Iterate through discovered services and their characteristics
-                    for (service in gatt.services) {
-                        Log.d("GATT_CONN", "Service UUID: ${service.uuid}")
-                        for (characteristic in service.characteristics) {
-                            if(characteristic.uuid.toString() == "00002a6e-0000-1000-8000-00805f9b34fb")
-                            {
-                                gatt.setCharacteristicNotification(characteristic,true)
 
-                                val descriptor = characteristic.getDescriptor(CCCD_UUID)
-                                if (descriptor == null) {
-                                    Log.e("GATT_CONN", "CCCD descriptor not found for characteristic ${characteristic.uuid}")
-                                    continue // Skip if no CCCD
-                                }
+                    var tempChar = gatt.getService(envService_UUID)?.getCharacteristic(temp_UUID)
+                    var humChar = gatt.getService(envService_UUID)?.getCharacteristic(humidity_UUID)
 
-                                // Set the value for enabling notifications
-                                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                                // Write the descriptor value
-                                val writeSuccess = gatt.writeDescriptor(descriptor)
-                                Log.d("GATT_CONN", "Attempting to write CCCD for ${characteristic.uuid}: $writeSuccess")
-
-
-                                //gatt.readCharacteristic(characteristic)
-                            } // Log.d("GATT_CONN", "  Characteristic UUID: ${characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,1)}")
-
-
-                            Log.d("GATT_CONN", "  Characteristic UUID: ${characteristic.uuid}")
-                            // You can add logic here to read or write characteristics
-                            // For example, to read a characteristic:
-                            // gatt.readCharacteristic(characteristic)
-                        }
+                    if(tempChar != null)
+                    {
+                        gattQueue.add { enableCharacteristicNotification(gatt,tempChar) }
                     }
+                    if(humChar != null)
+                    {
+                        gattQueue.add { enableCharacteristicNotification(gatt,humChar) }
+                    }
+                    nextGattOperation()
                 } else {
                     Log.e("GATT_CONN", "Service discovery failed with status: $status")
+                }
+
+            }
+
+            override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor?, status: Int) {
+                super.onDescriptorWrite(gatt, descriptor, status)
+                gattQueueBusy = false
+                nextGattOperation()
+            }
+            private fun enableCharacteristicNotification(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+                gatt.setCharacteristicNotification(characteristic, true)
+                val descriptor = characteristic.getDescriptor(CCCD_UUID)
+                if (descriptor != null) {
+                    descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    val writeSuccess = gatt.writeDescriptor(descriptor)
+                    Log.d("GATT_CONN", "Attempting to write CCCD for ${characteristic.uuid}: $writeSuccess")
+                    // The onDescriptorWrite callback will handle the next operation
+                } else {
+                    Log.e("GATT_CONN", "CCCD descriptor is NULL for characteristic: ${characteristic.uuid}. Continuing with next op.")
+                    gattQueueBusy = false
+                    nextGattOperation()
                 }
             }
 
@@ -154,11 +176,11 @@ class BLE_manager(
                 characteristic: BluetoothGattCharacteristic?
             ) {
                 characteristic?.let { char ->
-                    if (char.uuid.toString() == "00002a6e-0000-1000-8000-00805f9b34fb") {
+                    if (char.uuid == temp_UUID || char.uuid == humidity_UUID) {
                         // Assuming Nicla sends temperature as a 16-bit unsigned integer
                         val value = char.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)
                         Log.d("GATT_NOTIFY", "Characteristic ${char.uuid} changed (notified): ${value}")
-                        onDataReceived(value)
+                        onDataReceived(char,value)
 
                     } else {
                         val value = char.value // For other characteristics, get raw bytes

@@ -2,6 +2,7 @@ package com.example.ble_con.Presentation
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +41,9 @@ fun MainScreen(
     navController: NavController,
     ble_api: BLE_manager
 ) {
-    var selectedIndex = remember { mutableStateOf<ScanResult?>(null) };
+    var selectedDevice = remember { mutableStateOf<ScanResult?>(null) };
     var temp_value = remember { mutableStateOf<Float>(0f) }
+    var humidity_value = remember { mutableStateOf<Int>(-1) }
     var connectionState = remember { mutableStateOf<String>("Disconnected") }
 
     Column(Modifier.fillMaxSize()){
@@ -54,7 +56,7 @@ fun MainScreen(
 
         )
         {
-            Text(text = "Selected: ${selectedIndex.value?.device?.name}")
+            Text(text = "Selected: ${selectedDevice.value?.device?.name}")
             Text(text = "Connection: ${connectionState.value}")
         }
         Box(
@@ -70,6 +72,11 @@ fun MainScreen(
                         .clip(CircleShape)
                         .background(Color.Blue, CircleShape)
                         .clickable {
+                            temp_value.value = 0f
+                            humidity_value.value = -1
+                            ble_api.closeConnection()
+                            connectionState.value = "Disconnected"
+                            selectedDevice.value = null
                             ble_api.scanLeDevice()
                         },
                     contentAlignment = Alignment.Center
@@ -94,11 +101,17 @@ fun MainScreen(
                                 .fillMaxSize()
                                 .padding(5.dp)
                                 .clickable {
-                                    selectedIndex.value = scanResult
+                                    selectedDevice.value = scanResult
 
                                     ble_api.connectToDevice(scanResult.device, connectionState,
-                                        { temp->
-                                           temp_value.value = temp.toFloat()
+                                        { char,value->
+                                            when(char.uuid)
+                                            {
+                                                ble_api.temp_UUID -> temp_value.value = value.toFloat()
+                                                ble_api.humidity_UUID -> humidity_value.value = value
+                                                else -> Log.d("MAIN_SCREEN","wrong characteristic")
+                                            }
+
                                         }
                                     )
 
@@ -127,6 +140,8 @@ fun MainScreen(
             {
                 Text(text = "Temp: ${temp_value.value/100} C")
             }
+            if(humidity_value.value != -1)
+                Text(text = "Humidity ${humidity_value.value} %")
         }
     }
 

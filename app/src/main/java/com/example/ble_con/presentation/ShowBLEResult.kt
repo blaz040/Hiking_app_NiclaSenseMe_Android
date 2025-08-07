@@ -93,7 +93,7 @@ fun ShowBLEResults(
                                 .clickable {
                                     selectedIndex.value = scanResult
 
-                                    bluetoothManager.connectToDevice(scanResult.device, connectionState,{})
+                                  // bluetoothManager.connectToDevice(scanResult.device, connectionState,{_,_})
 
                                 }
                         )
