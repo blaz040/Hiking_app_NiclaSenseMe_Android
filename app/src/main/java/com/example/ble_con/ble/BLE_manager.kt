@@ -27,8 +27,14 @@ class BLE_manager(
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
     val envService_UUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB")
+
     val temp_UUID = UUID.fromString("00002A6E-0000-1000-8000-00805F9B34FB")
     val humidity_UUID = UUID.fromString("00002A6F-0000-1000-8000-00805F9B34FB")
+    val IAQ_UUID = UUID.fromString("00002AF2-0000-1000-8000-00805F9B34FB")
+    val bVOC_UUID = UUID.fromString("00002BE7-0000-1000-8000-00805F9B34FB")
+    val CO2_UUID = UUID.fromString("00002B8C-0000-1000-8000-00805F9B34FB")
+
+    val characteristics_list = listOf(temp_UUID,humidity_UUID,IAQ_UUID,bVOC_UUID,CO2_UUID)
 
     var bluetoothGatt: BluetoothGatt? = null
 
@@ -79,7 +85,7 @@ class BLE_manager(
         bluetoothGatt = null
     }
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT permission needed here
-     fun connectToDevice(device: BluetoothDevice, connectionState: MutableState<String>, onDataReceived: (BluetoothGattCharacteristic,Int) -> Unit ) {
+     fun connectToDevice(device: BluetoothDevice, connectionState: MutableState<String>, onDataReceived: (BluetoothGattCharacteristic) -> Unit ) {
         // Disconnect from any previously connected device
        closeConnection()
 
@@ -121,16 +127,11 @@ class BLE_manager(
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d("GATT_CONN", "Services discovered successfully.")
 
-                    var tempChar = gatt.getService(envService_UUID)?.getCharacteristic(temp_UUID)
-                    var humChar = gatt.getService(envService_UUID)?.getCharacteristic(humidity_UUID)
-
-                    if(tempChar != null)
-                    {
-                        gattQueue.add { enableCharacteristicNotification(gatt,tempChar) }
-                    }
-                    if(humChar != null)
-                    {
-                        gattQueue.add { enableCharacteristicNotification(gatt,humChar) }
+                    characteristics_list.forEach {
+                        var tmpChar = gatt.getService(envService_UUID)?.getCharacteristic(it)
+                        if(tmpChar != null) {
+                            gattQueue.add { enableCharacteristicNotification(gatt, tmpChar) }
+                        }
                     }
                     nextGattOperation()
                 } else {
@@ -171,22 +172,8 @@ class BLE_manager(
                 }
             }
 
-            override fun onCharacteristicChanged(
-                gatt: BluetoothGatt?,
-                characteristic: BluetoothGattCharacteristic?
-            ) {
-                characteristic?.let { char ->
-                    if (char.uuid == temp_UUID || char.uuid == humidity_UUID) {
-                        // Assuming Nicla sends temperature as a 16-bit unsigned integer
-                        val value = char.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)
-                        Log.d("GATT_NOTIFY", "Characteristic ${char.uuid} changed (notified): ${value}")
-                        onDataReceived(char,value)
-
-                    } else {
-                        val value = char.value // For other characteristics, get raw bytes
-                        Log.d("GATT_NOTIFY", "Characteristic ${char.uuid} changed (notified): ${value?.toHexString()}")
-                    }
-                }
+            override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
+                characteristic?.let { char -> onDataReceived(char) }
             }
 
             // You can add more overrides for onCharacteristicWrite, onCharacteristicChanged, etc.

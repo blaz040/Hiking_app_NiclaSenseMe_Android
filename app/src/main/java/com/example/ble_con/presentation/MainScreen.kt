@@ -1,6 +1,7 @@
 package com.example.ble_con.Presentation
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.le.ScanResult
 import android.util.Log
 import androidx.compose.foundation.background
@@ -33,7 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ble_con.ble.BLE_manager
+import com.example.ble_con.data.SensorData
 import dagger.hilt.android.HiltAndroidApp
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -42,8 +46,12 @@ fun MainScreen(
     ble_api: BLE_manager
 ) {
     var selectedDevice = remember { mutableStateOf<ScanResult?>(null) };
+
+    var sData =  remember { mutableStateOf<SensorData>(SensorData()) }
+    /*
     var temp_value = remember { mutableStateOf<Float>(0f) }
     var humidity_value = remember { mutableStateOf<Int>(-1) }
+    */
     var connectionState = remember { mutableStateOf<String>("Disconnected") }
 
     Column(Modifier.fillMaxSize()){
@@ -72,8 +80,6 @@ fun MainScreen(
                         .clip(CircleShape)
                         .background(Color.Blue, CircleShape)
                         .clickable {
-                            temp_value.value = 0f
-                            humidity_value.value = -1
                             ble_api.closeConnection()
                             connectionState.value = "Disconnected"
                             selectedDevice.value = null
@@ -104,12 +110,39 @@ fun MainScreen(
                                     selectedDevice.value = scanResult
 
                                     ble_api.connectToDevice(scanResult.device, connectionState,
-                                        { char,value->
+                                        { char->
                                             when(char.uuid)
                                             {
-                                                ble_api.temp_UUID -> temp_value.value = value.toFloat()
-                                                ble_api.humidity_UUID -> humidity_value.value = value
-                                                else -> Log.d("MAIN_SCREEN","wrong characteristic")
+                                                ble_api.temp_UUID ->{
+                                                    val rawData = char.value
+                                                    if (rawData != null && rawData.size == 4) {
+                                                        val buffer = ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN)
+                                                        val floatValue = buffer.float
+
+                                                        sData.value = sData.value.copy(temp_value = floatValue)
+                                                        Log.d("GATT_NOTIFY", "Characteristic temp: $floatValue")
+                                                    } else {
+                                                        Log.e("GATT_NOTIFY", "Received invalid data for temp characteristic.")
+                                                    }
+                                                    //Log.d("GATT_NOTIFY","Characteristic temp ${ sData.value.temp_value }")
+                                                }
+                                                ble_api.humidity_UUID->{
+                                                    sData.value =sData.value.copy(humidity_value = char.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,0))
+
+                                                    Log.d("GATT_NOTIFY","Characteristic humidity ${sData.value.humidity_value}")
+                                                }
+                                                ble_api.IAQ_UUID->{
+                                                    Log.d("GATT_NOTIFY","Characteristic IAQ")
+                                                }
+                                                ble_api.bVOC_UUID->{
+                                                    Log.d("GATT_NOTIFY","Characteristic bVOC")
+                                                }
+                                                ble_api.CO2_UUID->{
+                                                    Log.d("GATT_NOTIFY","Characteristic CO2")
+                                                }
+                                                else->{
+                                                    Log.d("GATT_NOTIFY","Characteristic Unknown")
+                                                }
                                             }
 
                                         }
@@ -136,12 +169,12 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement =   Arrangement.Center
         ) {
-            if(temp_value.value != 0f)
+            if(sData.value.temp_value != 0f)
             {
-                Text(text = "Temp: ${temp_value.value/100} C")
+                Text(text = "Temp: ${sData.value.temp_value} C")
             }
-            if(humidity_value.value != -1)
-                Text(text = "Humidity ${humidity_value.value} %")
+            if(sData.value.humidity_value != -1)
+                Text(text = "Humidity ${sData.value.humidity_value} %")
         }
     }
 
