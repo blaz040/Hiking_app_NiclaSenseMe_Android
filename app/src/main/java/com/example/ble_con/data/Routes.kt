@@ -1,4 +1,4 @@
-package com.example.ble_con.Presentation
+package com.example.ble_con.data
 
 object Routes {
     val screenA = "screen_A"

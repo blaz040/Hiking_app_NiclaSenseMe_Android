@@ -1,7 +1,6 @@
 package com.example.ble_con.data
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+
 
 data class SensorData(
     var temp_value: Float = 0f,

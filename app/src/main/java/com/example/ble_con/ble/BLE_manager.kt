@@ -2,6 +2,7 @@ package com.example.ble_con.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass.Service
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
@@ -16,6 +17,7 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.lifecycle.MutableLiveData
 import java.util.UUID
 import javax.inject.Inject
 
@@ -23,7 +25,7 @@ import javax.inject.Inject
 class BLE_manager(
     private val bluetoothAdapter: BluetoothAdapter,
     val context: Context
-){
+) {
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
     val envService_UUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB")
@@ -33,6 +35,8 @@ class BLE_manager(
     val IAQ_UUID = UUID.fromString("00002AF2-0000-1000-8000-00805F9B34FB")
     val bVOC_UUID = UUID.fromString("00002BE7-0000-1000-8000-00805F9B34FB")
     val CO2_UUID = UUID.fromString("00002B8C-0000-1000-8000-00805F9B34FB")
+
+    val send_UUID  = UUID.fromString("00000001-0000-1000-8000-00805F9B34FB")
 
     val characteristics_list = listOf(temp_UUID,humidity_UUID,IAQ_UUID,bVOC_UUID,CO2_UUID)
 
@@ -79,13 +83,15 @@ class BLE_manager(
             }
         }
     }
+
     fun closeConnection()
     {
         bluetoothGatt?.close()
         bluetoothGatt = null
     }
+
     @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT permission needed here
-     fun connectToDevice(device: BluetoothDevice, connectionState: MutableState<String>, onDataReceived: (BluetoothGattCharacteristic) -> Unit ) {
+     fun connectToDevice(device: BluetoothDevice, setConnectionStatus: (String) -> Unit, onDataReceived: (BluetoothGattCharacteristic) -> Unit ) {
         // Disconnect from any previously connected device
        closeConnection()
 
@@ -108,14 +114,15 @@ class BLE_manager(
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     // Device connected
                     Log.d("GATT_CONN", "Connected to GATT server.")
-                    connectionState.value = "Connected"
+                    setConnectionStatus("Connected")
+
                     // Discover services after successful connection
                     gatt.discoverServices()
                     Log.d("GATT_CONN", "Discovering services...")
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // Device disconnected
                     Log.d("GATT_CONN", "Disconnected from GATT server.")
-                    connectionState.value = "Disconnected"
+                    setConnectionStatus("Disconnected")
                     gatt.close() // Close GATT client
                     bluetoothGatt = null
                 }
@@ -176,19 +183,28 @@ class BLE_manager(
                 characteristic?.let { char -> onDataReceived(char) }
             }
 
+            override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
+                super.onCharacteristicWrite(gatt, characteristic, status)
+                Log.d("GATT_WRITE","Writting to characteristic : $status")
+            }
             // You can add more overrides for onCharacteristicWrite, onCharacteristicChanged, etc.
         })
     }
 
     // Helper function to convert byte array to hex string for logging
-     fun ByteArray.toHexString(): String =
-        joinToString(separator = " ", prefix = "0x") { String.format("%02X", it) }
-
-
-
     fun getbleScanResults(): SnapshotStateList<ScanResult>
     {
         return ble_scanResults
+    }
+
+    fun send(value: Int)
+    {
+        val service = bluetoothGatt?.getService(envService_UUID)
+        val commandChar = service?.getCharacteristic(send_UUID)
+
+        commandChar?.setValue(value,BluetoothGattCharacteristic.FORMAT_UINT16,0)
+        val writeSuccess = bluetoothGatt?.writeCharacteristic(commandChar)
+        Log.d("BlE_WRITE","Attempting to write command: $value. Success: $writeSuccess")
     }
 
 }
