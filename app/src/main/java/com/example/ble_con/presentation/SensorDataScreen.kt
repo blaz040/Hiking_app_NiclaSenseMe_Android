@@ -1,4 +1,4 @@
-package com.example.ble_con.Presentation
+package com.example.ble_con.presentation
 
 import android.util.Log
 import android.view.View
@@ -67,6 +67,7 @@ fun SensorDataScreen(
 fun ShowData(vm: ViewModel = viewModel(),name: String = "null")
 {
     val visible = remember {mutableStateOf<Boolean>(false)}
+
     Row(modifier = Modifier.padding(10.dp),verticalAlignment = Alignment.CenterVertically){
         Text(text = name, Modifier.widthIn(20.dp,300.dp),fontSize = 20.sp)
         Box(Modifier.fillMaxWidth()) {
@@ -75,9 +76,8 @@ fun ShowData(vm: ViewModel = viewModel(),name: String = "null")
                 Modifier.size(50.dp)
                     .align(Alignment.CenterEnd,
                     )
-            )
-            {
-                //    Text("V",fontSize = 15.sp)
+            ){
+
             }
         }
     }
@@ -85,11 +85,11 @@ fun ShowData(vm: ViewModel = viewModel(),name: String = "null")
         when(name)
         {
             "Temperature"-> TempGraph(vm)
-            "Humidity"->HumidityGraph(vm)
+            "Humidity"-> HumidityGraph(vm)
             "IAQ"-> IAQGraph(vm)
             "bVOC"-> bVOCGraph(vm)
             "CO2"-> CO2Graph(vm)
-            else-> Log.d("GRAPH_DATA","Wrong name ")
+            else-> Log.e("GRAPH_DATA","Wrong name ")
         }
     }
 }

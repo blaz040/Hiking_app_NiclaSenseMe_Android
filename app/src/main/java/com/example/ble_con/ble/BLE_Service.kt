@@ -2,7 +2,6 @@ package com.example.ble_con.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothClass.Service
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
@@ -14,18 +13,15 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.lifecycle.MutableLiveData
 import java.util.UUID
-import javax.inject.Inject
 
 @SuppressLint("MissingPermission")
-class BLE_manager(
+class BLE_Service(
     private val bluetoothAdapter: BluetoothAdapter,
     val context: Context
-) {
+){
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
     val envService_UUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB")
@@ -69,15 +65,10 @@ class BLE_manager(
 
     // Device scan callback.
      val leScanCallback: ScanCallback = object : ScanCallback() {
-        @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
             val index = ble_scanResults.indexOfFirst { it.device.address == result.device.address}
-            if(index != -1)
-            {
-                ble_scanResults[index] = result
-            }
-            else{
+            if(index == -1){
                 if(result.device.name != null)
                     ble_scanResults.add(result)
             }
@@ -90,8 +81,7 @@ class BLE_manager(
         bluetoothGatt = null
     }
 
-    @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT permission needed here
-     fun connectToDevice(device: BluetoothDevice, setConnectionStatus: (String) -> Unit, onDataReceived: (BluetoothGattCharacteristic) -> Unit ) {
+    fun connectToDevice(device: BluetoothDevice, setConnectionStatus: (String) -> Unit, onDataReceived: (BluetoothGattCharacteristic) -> Unit ) {
         // Disconnect from any previously connected device
        closeConnection()
 
@@ -123,17 +113,16 @@ class BLE_manager(
                     // Device disconnected
                     Log.d("GATT_CONN", "Disconnected from GATT server.")
                     setConnectionStatus("Disconnected")
-                    gatt.close() // Close GATT client
-                    bluetoothGatt = null
+                    closeConnection()
                 }
             }
-
             // Callback for services discovered
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                 super.onServicesDiscovered(gatt, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d("GATT_CONN", "Services discovered successfully.")
 
+                    //Enable notifications for each characteristic in list
                     characteristics_list.forEach {
                         var tmpChar = gatt.getService(envService_UUID)?.getCharacteristic(it)
                         if(tmpChar != null) {
@@ -144,7 +133,6 @@ class BLE_manager(
                 } else {
                     Log.e("GATT_CONN", "Service discovery failed with status: $status")
                 }
-
             }
 
             override fun onDescriptorWrite(gatt: BluetoothGatt?, descriptor: BluetoothGattDescriptor?, status: Int) {
@@ -159,7 +147,6 @@ class BLE_manager(
                     descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                     val writeSuccess = gatt.writeDescriptor(descriptor)
                     Log.d("GATT_CONN", "Attempting to write CCCD for ${characteristic.uuid}: $writeSuccess")
-                    // The onDescriptorWrite callback will handle the next operation
                 } else {
                     Log.e("GATT_CONN", "CCCD descriptor is NULL for characteristic: ${characteristic.uuid}. Continuing with next op.")
                     gattQueueBusy = false
@@ -185,9 +172,8 @@ class BLE_manager(
 
             override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
                 super.onCharacteristicWrite(gatt, characteristic, status)
-                Log.d("GATT_WRITE","Writting to characteristic : $status")
+                Log.d("GATT_WRITE","Writing to characteristic : $status")
             }
-            // You can add more overrides for onCharacteristicWrite, onCharacteristicChanged, etc.
         })
     }
 

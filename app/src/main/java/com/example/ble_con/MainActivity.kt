@@ -1,5 +1,6 @@
 package com.example.ble_con
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
@@ -11,7 +12,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.ble_con.Presentation.Navigation
+import androidx.core.app.ActivityCompat
+import com.example.ble_con.presentation.Navigation
+import com.example.ble_con.ble.TestService
+
 //import com.example.ble_con.Presentation.ShowBLEResults
 
 //@AndroidEntryPoint
@@ -21,10 +25,13 @@ class MainActivity : ComponentActivity() {
     //@Inject lateinit var bluetoothAdapter: BluetoothAdapter
     //private lateinit var manager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
+
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
+
+        //ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS),0)
 
         val bluetoothmanager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothmanager.adapter
@@ -32,11 +39,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             Navigation()
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        showBluetoothDialog()
     }
 
     private fun showBluetoothDialog()
@@ -47,7 +49,6 @@ class MainActivity : ComponentActivity() {
             startBluetoothIntentForResult.launch(enableBluetoothIntent)
         }
     }
-
     private val startBluetoothIntentForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result->
         if(result.resultCode != Activity.RESULT_OK)
@@ -55,7 +56,4 @@ class MainActivity : ComponentActivity() {
             showBluetoothDialog()
         }
     }
-
-
-
 }

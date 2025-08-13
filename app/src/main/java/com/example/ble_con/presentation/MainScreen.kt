@@ -1,4 +1,4 @@
-package com.example.ble_con.Presentation
+package com.example.ble_con.presentation
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
@@ -30,7 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ble_con.ViewModel
-import com.example.ble_con.data.Routes
+import com.example.ble_con.repository.Routes
+import com.example.ble_con.repository.SensorData
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -98,7 +99,7 @@ fun MainScreen(
                 }
                 LazyColumn()
                 {
-                    var ScanResults = vm.getScanResults()
+                    val ScanResults = vm.getScanResults()
 
                     itemsIndexed(
                         items = ScanResults,
@@ -130,6 +131,8 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement =   Arrangement.Center
         ) {
+            val number = SensorData.incNumber.observeAsState(0)
+            Text(text = "${number.value}")
             /*
             val tempValue by vm.tempValue.observeAsState(mutableListOf(0f))
 

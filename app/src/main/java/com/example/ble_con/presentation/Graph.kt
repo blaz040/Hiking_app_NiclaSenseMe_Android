@@ -14,6 +14,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ble_con.ViewModel
@@ -23,6 +26,8 @@ fun <T:Number>Graph(list: MutableList<T>, maxValue: Int, minValue: Int, strokeCo
 {
     val graphColor = Color.Black
     val lineSpace_F = lineSpace.toFloat()
+    val textMeasurer = rememberTextMeasurer()
+
     Card(Modifier.padding(15.dp)) {
         Canvas(
             modifier = Modifier
@@ -41,7 +46,10 @@ fun <T:Number>Graph(list: MutableList<T>, maxValue: Int, minValue: Int, strokeCo
             val horiSize = size.height / horizontalLines
             repeat(horizontalLines+1){ i->
                 val Y = horiSize * i
-                drawLine(graphColor,start = Offset(10f,Y),end = Offset(size.width-10,Y), strokeWidth = strokeWidth)
+                val num = minValue + (maxValue/horizontalLines.toFloat()) * (horizontalLines-i)
+
+                drawText(textMeasurer,text = "$num", topLeft = Offset(0f,Y))
+                drawLine(graphColor,start = Offset(30f,Y),end = Offset(size.width-10,Y), strokeWidth = strokeWidth)
             }
         }
     }
