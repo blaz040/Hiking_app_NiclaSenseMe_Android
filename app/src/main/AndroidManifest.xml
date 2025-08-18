@@ -27,7 +27,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
     <application
-        android:name=".ble.BLE_Application"
+        android:name=".BLE_Application"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -50,7 +50,7 @@
         </activity>
 
         <service android:name=".ble.TestService" android:foregroundServiceType="connectedDevice"/>
-
+        <service android:name=".ble.BLE_Service" android:foregroundServiceType="connectedDevice"/>
     </application>
 
 </manifest>

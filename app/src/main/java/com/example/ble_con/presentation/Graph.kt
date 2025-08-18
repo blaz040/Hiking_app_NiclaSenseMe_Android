@@ -1,5 +1,6 @@
 package com.example.ble_con.presentation
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,12 +15,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ble_con.ViewModel
+import com.example.ble_con.repository.SensorData
 
 @Composable
 fun <T:Number>Graph(list: MutableList<T>, maxValue: Int, minValue: Int, strokeColor: Color, strokeWidth: Float = 1f, lineSpace: Number = 10f)
@@ -58,7 +61,11 @@ fun <T: Number>generatePath(list: MutableList<T>, size: androidx.compose.ui.geom
 {
     val multiplier = size.height/maxValue
     val path = Path()
-    path.moveTo(list.first().toFloat(),size.height)
+
+    if(list.isEmpty()) return path
+
+    path.moveTo(0f,size.height - list.first().toFloat() * multiplier)
+    //list.removeAt(0)
     list.forEachIndexed { index, value ->
         path.lineTo(index.toFloat()*10,size.height - value.toFloat() * multiplier)
     }
@@ -67,35 +74,49 @@ fun <T: Number>generatePath(list: MutableList<T>, size: androidx.compose.ui.geom
 @Composable
 fun TempGraph(vm: ViewModel = viewModel())
 {
-    val tempList by vm.tempValue.observeAsState(mutableListOf(0))
+    val tempList by SensorData.tempList.observeAsState(mutableListOf(0))
 
     Graph(tempList,40,0, Color.Blue)
 }
 @Composable
 fun HumidityGraph(vm: ViewModel = viewModel())
 {
-    val humList by vm.humidityValue.observeAsState(mutableListOf(0))
+    val humList by SensorData.humidityList.observeAsState(mutableListOf(0))
 
     Graph(humList,100,0, Color.Blue, lineSpace = 20)
 }
 @Composable
 fun IAQGraph(vm: ViewModel = viewModel())
 {
-    val iaq by vm.IAQValue.observeAsState(mutableListOf(0))
+    val iaq by SensorData.IAQList.observeAsState(mutableListOf(0))
 
     Graph(iaq,500,0, Color.Red, lineSpace = 100)
 }
 @Composable
 fun bVOCGraph(vm: ViewModel = viewModel())
 {
-    val bVOC by vm.bVOCValue.observeAsState(mutableListOf(0))
+    val bVOC by SensorData.bVOCList.observeAsState(mutableListOf(0))
 
     Graph(bVOC,1,0, Color.Red, lineSpace = 0.2)
 }
 @Composable
 fun CO2Graph(vm: ViewModel = viewModel())
 {
-    val CO2 by vm.CO2Value.observeAsState(mutableListOf(0))
+    val CO2 by SensorData.CO2List.observeAsState(mutableListOf(0))
 
     Graph(CO2,1000,0, Color.Red, lineSpace = 100)
+}
+@Composable
+fun PressureGraph(vm: ViewModel = viewModel())
+{
+    val pressure by SensorData.pressureList.observeAsState(mutableListOf(0))
+
+    Graph(pressure,1000,0, Color.Red, lineSpace = 100)
+}
+@Composable
+fun StepsGraph(vm: ViewModel = viewModel())
+{
+    val Steps by SensorData.stepsList.observeAsState(mutableListOf(0))
+
+    Graph(Steps,1000,0, Color.Red, lineSpace = 100)
 }

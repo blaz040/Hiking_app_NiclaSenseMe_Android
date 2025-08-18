@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +32,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ble_con.ViewModel
 import com.example.ble_con.repository.Routes
+import com.example.ble_con.repository.SendCommand
 import com.example.ble_con.repository.SensorData
+import com.example.ble_con.repository.ViewModelData
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -49,8 +52,8 @@ fun MainScreen(
 
         )
         {
-            val connectionStatus by vm.conStatus.observeAsState()
-            val selectedDevice  by vm.selectedDevice.observeAsState()
+            val connectionStatus by ViewModelData.conStatus.observeAsState()
+            val selectedDevice  by ViewModelData.selectedDevice.observeAsState()
             selectedDevice?.let {
                 Text(text = "Selected: ${it.device.name}")
             }
@@ -65,37 +68,24 @@ fun MainScreen(
         ){
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Box(
-                        modifier = Modifier
-                        .size(150.dp)
-                        .clip(CircleShape)
-                        .background(Color.Blue, CircleShape)
-                        .clickable {
-                            //ble_api.send(1)
-                            navController.navigate(Routes.screenB)
-                        },
-                        contentAlignment = Alignment.Center)
-                    {
-                        Text(text = "Send",color = Color.White)
+                    Button(
+                        onClick = {
+                                navController.navigate(Routes.screenB);
+                                vm.send(SendCommand.START) },
+                    ) {
+                        Text(text = "Start", color = Color.White)
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .clip(CircleShape)
-                            .background(Color.Blue, CircleShape)
-                            .clickable {
-                                vm.scanBLE()
-                            },
-                        contentAlignment = Alignment.Center
+                    Button(
+                        onClick = { vm.disconnect() }
                     )
                     {
-                        Text(
-                            text = "Start",
-                            color = Color.White,
-                            fontSize = 35.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(text = "Disconnect",color = Color.White)
                     }
+                   Button(
+                       onClick = { vm.scanBLE() },
+                   ) {
+                       Text(text = "Scan",color = Color.White)
+                   }
                 }
                 LazyColumn()
                 {
@@ -131,8 +121,6 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement =   Arrangement.Center
         ) {
-            val number = SensorData.incNumber.observeAsState(0)
-            Text(text = "${number.value}")
             /*
             val tempValue by vm.tempValue.observeAsState(mutableListOf(0f))
 
