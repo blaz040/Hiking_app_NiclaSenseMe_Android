@@ -5,6 +5,7 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import com.example.ble_con.ble.BLE_Manager
@@ -31,10 +32,6 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     {
         ble_api.scanLeDevice()
     }
-    fun getScanResults(): SnapshotStateList<ScanResult>
-    {
-        return ble_api.getbleScanResults()
-    }
     fun clearData()
     {
         SensorData._tempList.value.clear()
@@ -47,10 +44,10 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     {
         ViewModelData.setSelectedDevice(result)
         val context = getApplication() as Context
-        val intent = Intent(context,BLE_Service::class.java)
-
-        intent.action = BLE_Service.Actions.CONNECT.toString()
-        intent.putExtra("ScanResult",result)
+        val intent = Intent(context,BLE_Service::class.java).also{
+            it.action = BLE_Service.Actions.CONNECT.toString()
+            it.putExtra("ScanResult",result)
+        }
 
         context.startService(intent)
     }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ble_con.ViewModel
 import com.example.ble_con.repository.SendCommand
+import com.example.ble_con.repository.ViewModelData
 
 @Composable
 fun SensorDataScreen(
@@ -34,18 +36,27 @@ fun SensorDataScreen(
     Box(modifier = Modifier.fillMaxWidth().height(100.dp))
     val scrollState = rememberScrollState()
 
+
     Column(Modifier.fillMaxSize()
         .padding(10.dp)
         .verticalScroll(scrollState)
     ){
-        Row(){
-            Button({ vm.send(SendCommand.STOP) })
+        Row{
+            val transferringData = ViewModelData.transferringData.observeAsState(false)
+            var transferringStatus = "Resume"
+            var command = SendCommand.START;
+            if(transferringData.value) {transferringStatus = "Stop" ;command = SendCommand.STOP }
+            Button({ vm.send(command) })
             {
-                Text(text = "Stop",color = Color.White)
+                Text(text = transferringStatus,color = Color.White)
             }
             Button({ vm.clearData();vm.send(SendCommand.RESTART) })
             {
                 Text(text = "Restart",color = Color.White)
+            }
+            Button({})
+            {
+                Text(text = "Transferring Data: ${transferringData.value}",color = Color.White)
             }
         }
         ShowData(vm = vm,name = "Temperature")

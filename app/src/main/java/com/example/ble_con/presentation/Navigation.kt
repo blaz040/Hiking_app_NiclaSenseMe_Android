@@ -15,13 +15,13 @@ fun Navigation(
 ) {
 
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.screenA)
+    NavHost(navController = navController, startDestination = Routes.MainScreen)
     {
-        composable(Routes.screenA)
+        composable(Routes.MainScreen)
         {
             MainScreen(navController = navController,vm)
         }
-        composable(Routes.screenB)
+        composable(Routes.DataScren)
         {
             SensorDataScreen(vm)
         }

@@ -44,12 +44,10 @@
             android:theme="@style/Theme.BLE_con">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <service android:name=".ble.TestService" android:foregroundServiceType="connectedDevice"/>
         <service android:name=".ble.BLE_Service" android:foregroundServiceType="connectedDevice"/>
     </application>
 
