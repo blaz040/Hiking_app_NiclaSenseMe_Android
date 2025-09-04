@@ -1,4 +1,4 @@
-package com.example.ble_con.ble
+package com.example.ble_con.dataManager.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -6,23 +6,18 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.content.Intent
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
-import com.example.ble_con.repository.SendCommand
-import com.example.ble_con.repository.SensorData
+import androidx.lifecycle.MutableLiveData
+import com.example.ble_con.dataManager.repo.BroadcastAction
+import com.example.ble_con.dataManager.repo.ConStatus
+import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.repository.ViewModelData
-import org.jetbrains.annotations.NotNull
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -38,19 +33,21 @@ class BLE_Manager(
     private val pressure_UUID = UUID.fromString("00002780-0000-1000-8000-00805F9B34FB")
     private val IAQ_UUID = UUID.fromString("00002AF2-0000-1000-8000-00805F9B34FB")
     private val CO2_UUID = UUID.fromString("00002B8C-0000-1000-8000-00805F9B34FB")
+    private val bVOC_UUID = UUID.fromString("00002BE7-0000-1000-8000-00805F9B34FB")
+
+    private val env_characteristics_list = listOf(temp_UUID,humidity_UUID,pressure_UUID,IAQ_UUID,bVOC_UUID,CO2_UUID)
 
 
     private val otherService_UUID = UUID.fromString("00001000-0000-1000-8000-00805F9B34FB")
 
     private val step_UUID = UUID.fromString("000027BA-0000-1000-8000-00805F9B34FB")
-    private val bVOC_UUID = UUID.fromString("00002BE7-0000-1000-8000-00805F9B34FB")
     private val messageReceiver_UUID  = UUID.fromString("00001001-0000-1000-8000-00805F9B34FB")
 
-    private val characteristics_list = listOf(temp_UUID,humidity_UUID,pressure_UUID,step_UUID,IAQ_UUID,bVOC_UUID,CO2_UUID)
+    private val other_characteristics_list = listOf(step_UUID)
 
     private var bluetoothGatt: BluetoothGatt? = null
 
-    private var ble_scanResults = mutableStateMapOf<ScanResult,Int>()
+    //private var ble_scanResults = mutableStateMapOf<ScanResult,Int>()
 
     private val bluetoothManager by lazy {context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val bluetoothAdapter by lazy { bluetoothManager.adapter}
@@ -59,7 +56,7 @@ class BLE_Manager(
     private var scanning = false
     private val handler = android.os.Handler()
 
-    private var connected = false
+    private val connectionStatus = ViewModelData._conStatus
 
     // Stops scanning after 10 seconds.
      private val SCAN_PERIOD: Long = 10000
@@ -79,43 +76,36 @@ class BLE_Manager(
             bluetoothLeScanner?.stopScan(leScanCallback)
         }
     }
-
     // Device scan callback.
-     private val leScanCallback: ScanCallback = object : ScanCallback() {
+     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
             if(result.device.name != null)
                 ViewModelData.addScanResult(result)
-
-            /*val index = ble_scanResults.indexOfFirst { it.device.address == result.device.address}
-            if(index == -1){
-                if(result.device.name != null)
-                    ble_scanResults.add(result)
-            }
-            */
         }
     }
-    fun disconnect()
-    {
-        closeConnection()
+    fun disconnect() {
+        bluetoothGatt?.disconnect()
     }
-    fun closeConnection()
-    {
-        ViewModelData.setConnectionStatus("Disconnected")
+    fun closeConnection() {
         bluetoothGatt?.close()
         bluetoothGatt = null
     }
-
+    fun broadcastUpdate(action:String) {
+        val intent = Intent(action)
+            .setPackage(context.getPackageName());
+        context.sendBroadcast(intent)
+    }
     fun connectToDevice(device: BluetoothDevice) {
         // Disconnect from any previously connected device
-        closeConnection()
+        disconnect()
 
         val gattQueue = mutableListOf<() ->Unit>()
         var gattQueueBusy = false
 
         fun nextGattOperation()
         {
-            if(!gattQueue.isNotEmpty() && !gattQueueBusy)
+            if(gattQueue.isNotEmpty() && !gattQueueBusy)
             {
                 gattQueueBusy = true
                 gattQueue.removeAt(0).invoke()
@@ -129,35 +119,40 @@ class BLE_Manager(
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     // Device connected
                     Log.d("GATT_CONN", "Connected to GATT server.")
-                    Log.d("GATT_CONN", "Discovering services...")
                     gatt.discoverServices()
 
-                    ViewModelData.setConnectionStatus("Connected")
-                    connected = true
+                    broadcastUpdate(BroadcastAction.CONNECTED)
+                    connectionStatus.postValue(ConStatus.CONNECTED)
+
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // Device disconnected
                     Log.d("GATT_CONN", "Disconnected from GATT server.")
 
+                    broadcastUpdate(BroadcastAction.DISCONNECTED)
+                    connectionStatus.postValue(ConStatus.DISCONNECTED)
+
                     closeConnection()
-                    ViewModelData.setConnectionStatus("Disconnected")
-                    connected = false
                 }
             }
             // Callback for services discovered
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                 super.onServicesDiscovered(gatt, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.d("GATT_CONN", "Services discovered successfully. state: ${gatt.device.bondState}")
-                    //gatt.device.createBond()
-                    Log.d("GATT_CONN", "Services discovered successfully. state: ${gatt.device.bondState}")
-                    gatt.printGattTable()
+                    Log.d("GATT_CONN", "Services discovered successfully")
+                    //gatt.printGattTable()
                     gatt.services.forEach {
-                            Log.d("GATT_CONN","service ${it.type}: ${it.uuid} discovered")
+                        Log.d("GATT_CONN","service ${it.type}: ${it.uuid} discovered")
                     }
 
                     //Enable notifications for each characteristic in list
-                    characteristics_list.forEach {
+                    env_characteristics_list.forEach {
                         val tmpChar = gatt.getService(envService_UUID)?.getCharacteristic(it)
+                        if(tmpChar != null) {
+                            gattQueue.add { enableCharacteristicNotification(gatt, tmpChar) }
+                        }
+                    }
+                    other_characteristics_list.forEach {
+                        val tmpChar = gatt.getService(otherService_UUID)?.getCharacteristic(it)
                         if(tmpChar != null) {
                             gattQueue.add { enableCharacteristicNotification(gatt, tmpChar) }
                         }
@@ -216,44 +211,39 @@ class BLE_Manager(
         val intFormat = BluetoothGattCharacteristic.FORMAT_UINT16
         when (char.uuid) {
             temp_UUID -> {
-                /*val rawData = char.value
-                if (rawData != null && rawData.size == 4) {
-                    val buffer = ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN)
-                    val floatValue = buffer.float
-
-                    SensorData.updateList(SensorData._tempList,floatValue)
-                    }
-                */
                 val floatValue = char.getIntValue(intFormat,0).toFloat()/100
                 SensorData.updateList(SensorData._tempList,floatValue)
                 Log.d("GATT_NOTIFY", "Characteristic temp: $floatValue")
-
             }
-
             humidity_UUID -> {
+                val value = char.getIntValue(intFormat,0)
                 SensorData.updateList(SensorData._humidityList,char.getIntValue(intFormat,0))
-                // Log.d("GATT_NOTIFY", "Characteristic humidity ")
+                Log.d("GATT_NOTIFY", "Characteristic humidity: $value ")
+            }
+            pressure_UUID ->{
+                val value = char.getIntValue(intFormat,0)
+                SensorData.updateList(SensorData._pressureList,char.getIntValue(intFormat,0))
+                Log.d("GATT_NOTIFY", "Characteristic pressure: $value ")
             }
             IAQ_UUID -> {
+                val value = char.getIntValue(intFormat,0)
                 SensorData.updateList(SensorData._IAQList,char.getIntValue(intFormat,0))
-                Log.d("GATT_NOTIFY", "Characteristic IAQ")
+                Log.d("GATT_NOTIFY", "Characteristic IAQ: $value")
             }
             bVOC_UUID -> {
-                /*val rawData = char.value
-                if (rawData != null && rawData.size == 4) {
-                    val buffer = ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN)
-                    val floatValue = buffer.float
-                    }
-                */
-                    val floatValue = char.getIntValue(intFormat,0).toFloat()/100
-                    SensorData.updateList(SensorData._bVOCList,floatValue)
-
-                    Log.d("GATT_NOTIFY", "Characteristic bVOC: $floatValue")
+                val floatValue = char.getIntValue(intFormat,0).toFloat()/100
+                SensorData.updateList(SensorData._bVOCList,floatValue)
+                Log.d("GATT_NOTIFY", "Characteristic bVOC: $floatValue")
             }
-
             CO2_UUID -> {
-                SensorData.updateList(SensorData._CO2List,char.getIntValue(intFormat,0))
-                Log.d("GATT_NOTIFY", "Characteristic CO2")
+                val value = char.getIntValue(intFormat,0)
+                SensorData.updateList(SensorData._CO2List,value)
+                Log.d("GATT_NOTIFY", "Characteristic CO2: $value ")
+            }
+            step_UUID-> {
+                val value = char.getIntValue(intFormat,0)
+                SensorData.updateList(SensorData._stepsList,value)
+                Log.d("GATT_NOTIFY","Characteristic Steps: $value")
             }
             else -> {
                 Log.d("GATT_NOTIFY", "Characteristic Unknown")
@@ -263,16 +253,6 @@ class BLE_Manager(
 
     fun send(value: Int)
     {
-        var status = false
-        when(value)
-        {
-            SendCommand.START.ordinal -> status = true
-            SendCommand.STOP.ordinal -> status = false
-            SendCommand.RESTART.ordinal -> status = true
-        }
-        ViewModelData.setTransferringData(status)
-
-        //bluetoothGatt?.printGattTable()
         val service = bluetoothGatt?.getService(otherService_UUID)
         val commandChar = service?.getCharacteristic(messageReceiver_UUID)
 

@@ -13,16 +13,13 @@ import com.example.ble_con.repository.Routes
 fun Navigation(
    vm: ViewModel = viewModel()
 ) {
-
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.MainScreen)
     {
-        composable(Routes.MainScreen)
-        {
+        composable(Routes.MainScreen) {
             MainScreen(navController = navController,vm)
         }
-        composable(Routes.DataScren)
-        {
+        composable(Routes.DataScren) {
             SensorDataScreen(vm)
         }
     }

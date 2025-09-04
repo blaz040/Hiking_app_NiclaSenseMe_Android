@@ -1,0 +1,63 @@
+package com.example.ble_con.dataManager.repo
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import co.yml.charts.common.model.Point
+
+object SensorData {
+
+    val maxListSize = 80
+
+    val _tempList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val tempList: LiveData<MutableList<Point>> = _tempList
+
+    val _humidityList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val humidityList: LiveData<MutableList<Point>> = _humidityList
+
+    val _IAQList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val IAQList: LiveData<MutableList<Point>> = _IAQList
+
+    val _bVOCList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val bVOCList: LiveData<MutableList<Point>> = _bVOCList
+
+    val _CO2List: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val CO2List: LiveData<MutableList<Point>> = _CO2List
+
+    val _pressureList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val pressureList: LiveData<MutableList<Point>> = _pressureList
+
+    val _stepsList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val stepsList: LiveData<MutableList<Point>> = _stepsList
+
+    val _time: MutableLiveData<Int> = MutableLiveData(0)
+
+    /* */
+    fun <T> MutableLiveData<MutableList<T>>.add(value: T){
+
+    }
+    /*
+    fun <T> updateList (list: MutableLiveData<MutableList<T>>, value :T)
+    {
+        val newList = list.value.toMutableList().apply { add(value) }
+
+        if(list.value.size >= maxListSize )
+            newList.removeAt(0)
+
+        list.postValue(newList)
+    }
+    */
+    fun<T: Number> updateList (list: MutableLiveData<MutableList<Point>>, value :T) {
+        val currentTime = _time.value.toFloat()
+
+        if(list.value.size >= maxListSize)
+            list.value?.removeAt(0)
+
+        val newList = list.value.toMutableList().apply { add(Point(currentTime, value.toFloat())) }
+
+        list.postValue(newList)
+    }
+
+    fun updateTime(value:Int) {
+        _time.postValue(value)
+    }
+}

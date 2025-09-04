@@ -87,5 +87,6 @@ dependencies {
 
     implementation("androidx.compose.runtime:runtime-livedata")
 
-
+    //YCharts
+    implementation("co.yml:ycharts:2.1.0")
 }

@@ -48,7 +48,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".ble.BLE_Service" android:foregroundServiceType="connectedDevice"/>
+        <service android:name=".dataManager.SensorDataManagerService" android:foregroundServiceType="connectedDevice"/>
+
     </application>
 
 </manifest>
