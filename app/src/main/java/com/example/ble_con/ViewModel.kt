@@ -6,13 +6,12 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import com.example.ble_con.dataManager.SensorDataManagerService
-import com.example.ble_con.dataManager.ble.BLE_Manager
-import com.example.ble_con.repository.ViewModelData
+import com.example.ble_con.dataManager.ble.BLEManager
 
 class ViewModel(application: Application) : AndroidViewModel(application) {
     val TAG = "ViewModel"
     /* bluetooth */
-    private val ble_api: BLE_Manager by lazy{ BLE_Manager(application) }
+    private val ble_api: BLEManager by lazy{ BLEManager(application) }
 
     fun startRecording() {
         SDMS_send(SensorDataManagerService.RECORDING_START)

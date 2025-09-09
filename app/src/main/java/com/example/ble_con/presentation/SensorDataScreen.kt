@@ -1,4 +1,5 @@
 package com.example.ble_con.presentation
+import android.Manifest
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -39,6 +40,13 @@ import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.repository.ViewModelData
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 
 @Composable
 fun SensorDataScreen(
@@ -77,8 +85,39 @@ fun SensorDataScreen(
             ShowBlock(SensorData.CO2List,name = "CO2",graph = graph)
         }
         ShowGraph(graph.value)
+        ShowMap()
     }
+}
 
+@Composable
+fun ShowMap() {
+    val locationList = SensorData.location.observeAsState().value
+    var startLocation = when(locationList!!.isEmpty()) {
+        true -> LatLng(46.05,14.50)// Ljubljana
+        false -> locationList.first()
+    }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(startLocation, 20f)
+    }
+    GoogleMap(
+        modifier = Modifier.height(300.dp).fillMaxWidth(),
+        cameraPositionState = cameraPositionState,
+        uiSettings = com.google.maps.android.compose.MapUiSettings(
+            zoomControlsEnabled = false,  // hide + / - buttons
+            mapToolbarEnabled = false     // hide the navigation toolbar
+        )
+    ) {
+        if(locationList.isNotEmpty()){
+            startLocation = locationList.first()
+            val markerState = rememberMarkerState(null,startLocation)
+            Marker(state = markerState)
+            Polyline(
+                points = locationList.toList(),
+                color = Color.Blue, // Blue line
+                width = 8f
+            )
+        }
+    }
 }
 @Composable
 fun ShowBlock(list:LiveData<MutableList<Point>>,postFix:String = "",name: String,graph:MutableState<String> ) {
@@ -130,11 +169,11 @@ fun ControlButtons(vm:ViewModel = viewModel()) {
                 resume_pause = "Pause"
             }
             RecordingStatus.PAUSED ->{
-                btn2_enabled = true
-                resume_pause = "Resume"
-
                 text_start_stop = "Stop";
                 fun1 = {vm.stopRecording()}
+
+                btn2_enabled = true
+                resume_pause = "Resume"
             }
             RecordingStatus.STOPPED->{
                 text_start_stop = "Start"

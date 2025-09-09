@@ -13,7 +13,6 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import com.example.ble_con.dataManager.repo.BroadcastAction
 import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.SensorData
@@ -21,7 +20,7 @@ import com.example.ble_con.repository.ViewModelData
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
-class BLE_Manager(
+class BLEManager(
     private val context: Context
 ){
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")

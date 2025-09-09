@@ -7,25 +7,20 @@
          location information, you can
          <a href="#assert-never-for-location">strongly assert that your app
          doesn't derive physical location</a>. -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-                        android:usesPermissionFlags="neverForLocation"/>
 
-    <!-- Needed only if your app makes the device discoverable to Bluetooth
-         devices. -->
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-
-    <!-- Needed only if your app communicates with already-paired Bluetooth
-         devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-                            android:maxSdkVersion="30" />
-
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
     <!-- foreground service !-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
+    <!-- Location    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:name=".BLE_Application"
         android:allowBackup="true"
@@ -37,6 +32,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BLE_con"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

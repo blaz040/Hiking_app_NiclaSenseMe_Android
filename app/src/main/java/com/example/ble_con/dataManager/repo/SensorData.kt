@@ -1,8 +1,10 @@
 package com.example.ble_con.dataManager.repo
 
+import android.location.Location
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
+import com.google.android.gms.maps.model.LatLng
 
 object SensorData {
 
@@ -28,6 +30,9 @@ object SensorData {
 
     val _stepsList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
     val stepsList: LiveData<MutableList<Point>> = _stepsList
+
+    val _location:MutableLiveData<MutableList<LatLng>> = MutableLiveData(mutableListOf())
+    val location: LiveData<MutableList<LatLng>> = _location
 
     val _time: MutableLiveData<Int> = MutableLiveData(0)
 
@@ -56,7 +61,14 @@ object SensorData {
 
         list.postValue(newList)
     }
+    fun<T: LatLng> updateList (list: MutableLiveData<MutableList<T>>, value :T) {
+        if(list.value.size >= maxListSize)
+            list.value?.removeAt(0)
 
+        val newList = list.value.toMutableList().apply { add(value) }
+
+        list.postValue(newList)
+    }
     fun updateTime(value:Int) {
         _time.postValue(value)
     }

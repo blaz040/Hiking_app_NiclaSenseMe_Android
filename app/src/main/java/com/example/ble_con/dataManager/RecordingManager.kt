@@ -8,7 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RecordingManager(
+class RecordingManager (
     val onTimeUpdate: (Int)->Unit
 ) {
 
@@ -23,9 +23,9 @@ class RecordingManager(
 
     fun start() {
         Log.d(TAG,"Starting...")
-        startTimer()
+        startStopWatch()
     }
-    private fun startTimer() {
+    private fun startStopWatch() {
         timerJob?.cancel()
 
         run = true;

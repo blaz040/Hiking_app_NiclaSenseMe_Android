@@ -13,14 +13,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.ble_con.R
 import com.example.ble_con.dataManager.repo.BroadcastAction
-import com.example.ble_con.dataManager.repo.ConStatus
-import com.example.ble_con.repository.ViewModelData
 
 
 @SuppressLint("MissingPermission")
-class BLE_Service: Service(){
+class BLEService: Service(){
 
-    private val ble_api = BLE_Manager(this)
+    private val ble_api = BLEManager(this)
 
     private var connected = false
 
@@ -46,7 +44,7 @@ class BLE_Service: Service(){
         }
 
         Log.d(TAG,"CONNECTING...")
-        val disconnectIntent = Intent(this, BLE_Service::class.java).apply {
+        val disconnectIntent = Intent(this, BLEService::class.java).apply {
             setAction(DISCONNECT)
         }
 
