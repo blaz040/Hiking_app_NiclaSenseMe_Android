@@ -44,23 +44,19 @@ fun Number.length() =  when(this) {
     0 -> 1
     else -> log10(abs(this.toFloat())).toInt() + 1
 }
-fun to_int_or_float(num: Float): Number
-{
+fun to_int_or_float(num: Float): Number {
     if(num.toInt()-num == 0f)
         return num.toInt()
     else return num
 }
-fun round(value:Number, dec:Int): Float
-{
+fun round(value:Number, dec:Int): Float {
     var offset:Int = 1
-    for (i in 1..dec)
-    {
+    for (i in 1..dec) {
         offset *= 10
     }
     return ((value.toFloat()*offset).toInt()).toFloat()/offset
 }
-fun<T: Number> List<T>.getMin(): Float
-{
+fun<T: Number> List<T>.getMin(): Float {
     val list = this.toList<T>()
     if(list.isEmpty()) return -100f
     var min:T? = null
@@ -73,8 +69,7 @@ fun<T: Number> List<T>.getMin(): Float
     }
     return min!!.toFloat();
 }
-fun<T: Number> List<T>.getMax(): Float
-{
+fun<T: Number> List<T>.getMax(): Float {
     val list = this.toList<T>()
     if(list.isEmpty()) return -100f
     var max:T? = null
@@ -107,6 +102,7 @@ fun List<Point>.min(): Float{
     }
     return min!!.y
 }
+
 fun formatPopUp(x:Float, y:Float): String {
     var str:String = "time: ${formatTime(x.toInt())}, y: $y"
     return str
@@ -292,7 +288,7 @@ fun Line_Graph(pointList: List<Point>){
                     ),
                     SelectionHighlightPoint(color = MaterialTheme.colorScheme.tertiary,),
                     ShadowUnderLine(
-                        alpha = 0.5f,
+                        alpha = 0.8f,
                         brush = Brush.verticalGradient(
                             colors = listOf( MaterialTheme.colorScheme.inversePrimary,
                                 Color.Transparent )
@@ -333,8 +329,7 @@ fun TempGraph()
 
 }
 @Composable
-fun HumidityGraph()
-{
+fun HumidityGraph() {
     val humList = SensorData.humidityList.observeAsState(mutableListOf(Point(0f,0f))).value
     Line_Graph(humList)
     //Flexible_Graph(humList, strokeColor = Color.Blue, lineSpace = 5f)

@@ -9,17 +9,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class RecordingManager (
-    val onTimeUpdate: (Int)->Unit
+    val serviceScope:CoroutineScope,
+    val onTimeUpdate: (Int)->Unit,
 ) {
+    private val TAG = "RecordingManager"
 
     private var time: Int = 0
 
     private var run = false
 
-    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var timerJob: Job? = null
-
-    private val TAG = "RecordingManager"
 
     fun start() {
         Log.d(TAG,"Starting...")
@@ -29,7 +28,6 @@ class RecordingManager (
         timerJob?.cancel()
 
         run = true;
-
         timerJob = serviceScope.launch {
             while(true) {
                 if (run) {
