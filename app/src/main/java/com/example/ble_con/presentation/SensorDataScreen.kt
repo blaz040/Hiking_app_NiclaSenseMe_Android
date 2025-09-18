@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,27 +43,29 @@ import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.repository.ViewModelData
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import kotlinx.coroutines.selects.select
 
 @Composable
 fun SensorDataScreen(
     vm: ViewModel = viewModel()
 ) {
+
     // Box used for whitespace
-    Box(modifier = Modifier.fillMaxWidth().height(100.dp))
+    Spacer(modifier = Modifier.height(100.dp))
     val scrollState = rememberScrollState()
 
     Column(Modifier.fillMaxSize()
         .padding(10.dp)
         .verticalScroll(scrollState)
     ){
-        val graph = remember { mutableStateOf<String>("null")}
+        val selectedData = remember { mutableStateOf(ViewModelData.nothing)}
         Column(Modifier.fillMaxWidth()){
-
             ControlButtons(vm)
 
             val time = ViewModelData.time.observeAsState(0).value
@@ -71,20 +74,21 @@ fun SensorDataScreen(
             }
         }
         Row(Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowBlock(SensorData.humidityList," %", name = "Humidity",graph = graph)
-            ShowBlock(SensorData.pressureList," bar",name = "Pressure",graph = graph)
+            ShowBlock(ViewModelData.humidity,selected = selectedData)
+            ShowBlock(ViewModelData.pressure,selected = selectedData)
         }
         Row(Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowBlock(SensorData.tempList," C",name = "Temperature",graph = graph)
-            ShowBlock(SensorData.stepsList," steps",name = "Steps",graph = graph)
+            ShowBlock(ViewModelData.temperature,selected = selectedData)
+            ShowBlock(ViewModelData.steps,selected = selectedData)
 
         }
         Row(Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowBlock(SensorData.IAQList,name = "IAQ",graph = graph)
-            ShowBlock(SensorData.bVOCList,name = "bVOC",graph = graph)
-            ShowBlock(SensorData.CO2List,name = "CO2",graph = graph)
+            ShowBlock(ViewModelData.airQuality,selected = selectedData)
+            ShowBlock(ViewModelData.voc,selected = selectedData)
+            ShowBlock(ViewModelData.co2,selected = selectedData)
         }
-        ShowGraph(graph.value)
+        ShowBlock(ViewModelData.altitude,selected = selectedData)
+        ShowGraph(selectedData.value)
         ShowMap()
     }
 }
@@ -96,11 +100,15 @@ fun ShowMap() {
         true -> LatLng(46.05,14.50)// Ljubljana
         false -> locationList.first()
     }
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(startLocation, 20f)
+    val cameraPositionState = when(locationList!!.isEmpty()) {
+        false -> rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(startLocation, 20f)
+        }
+
+        true -> CameraPositionState(CameraPosition.fromLatLngZoom(startLocation, 20f))
     }
     GoogleMap(
-        modifier = Modifier.height(300.dp).fillMaxWidth(),
+    modifier = Modifier.height(300.dp).fillMaxWidth(),
         cameraPositionState = cameraPositionState,
         uiSettings = com.google.maps.android.compose.MapUiSettings(
             zoomControlsEnabled = false,  // hide + / - buttons
@@ -120,21 +128,22 @@ fun ShowMap() {
     }
 }
 @Composable
-fun ShowBlock(list:LiveData<MutableList<Point>>,postFix:String = "",name: String,graph:MutableState<String> ) {
-    Card(Modifier.padding(10.dp).sizeIn(80.dp,70.dp,200.dp,80.dp).clickable{ graph.value = name} , elevation = CardDefaults.elevatedCardElevation(10.dp), border = BorderStroke(1.dp,color = Color.Black)) {
+fun ShowBlock(data: ViewModelData.DataInfo,selected: MutableState<ViewModelData.DataInfo>) {
+
+    Card(Modifier.padding(10.dp).sizeIn(80.dp,70.dp,200.dp,80.dp).clickable{ selected.value = data} , elevation = CardDefaults.elevatedCardElevation(10.dp), border = BorderStroke(1.dp,color = Color.Black)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.ic_launcher_foreground), "icon", Modifier.size(40.dp))
-            Text(text = name, Modifier.padding(5.dp))
+            Image(painterResource(data.icon), "icon", Modifier.size(40.dp).padding(5.dp))
+            Text(text = data.name, Modifier.padding(5.dp))
         }
-        val value = list.observeAsState().value
+        val value = data.list.observeAsState().value
         var txt = "null"
-        if (value?.isNotEmpty() == true) txt = value.last().y.toString()
-        Text(text = "$txt $postFix", Modifier.padding(5.dp))
+        if (value?.isNotEmpty() == true) txt = value.last().y.toString() + data.postFix
+        Text(text = txt, Modifier.padding(5.dp))
     }
 }
 fun translate(value: Int): String {
     var str = value.toString()
-    if(value <10) str ="0${value.toString()}"
+    if(value <10) str ="0${value}"
     return str
 }
 fun formatTime(time: Int):String {
@@ -162,14 +171,14 @@ fun ControlButtons(vm:ViewModel = viewModel()) {
 
         when(recordingStatus){
             RecordingStatus.RUNNING -> {
-                text_start_stop = "Stop";
+                text_start_stop = "Stop"
                 fun1 = {vm.stopRecording()}
 
                 btn2_enabled = true
                 resume_pause = "Pause"
             }
             RecordingStatus.PAUSED ->{
-                text_start_stop = "Stop";
+                text_start_stop = "Stop"
                 fun1 = {vm.stopRecording()}
 
                 btn2_enabled = true
@@ -193,26 +202,12 @@ fun ControlButtons(vm:ViewModel = viewModel()) {
     }
 }
 @Composable
-fun ShowGraph(name:String = "null")
+fun ShowGraph(data: ViewModelData.DataInfo)
 {
-    if(name == "null") return
+    if(data.name == "null") return
     Column {
-        Text(text = name,Modifier.padding(10.dp))
-        val list = when (name) {
-            "Temperature" -> SensorData.tempList
-            "Humidity" -> SensorData.humidityList
-            "IAQ" -> SensorData.IAQList
-            "bVOC" -> SensorData.bVOCList
-            "CO2" -> SensorData.CO2List
-            "Pressure" -> SensorData.pressureList
-            "Steps" -> SensorData.stepsList
-            else -> null
-        }
-        if(list == null) {
-            Log.e("GRAPH_DATA", "Wrong name ")
-            return
-        }
-        Graph(list)
+        Text(text = data.name,Modifier.padding(10.dp))
+        Graph(data.list)
     }
 }
 /*

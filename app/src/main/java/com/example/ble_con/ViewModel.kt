@@ -9,6 +9,7 @@ import com.example.ble_con.dataManager.SensorDataManagerService
 import com.example.ble_con.dataManager.ble.BLEManager
 
 class ViewModel(application: Application) : AndroidViewModel(application) {
+
     val TAG = "ViewModel"
     /* bluetooth */
     private val ble_api: BLEManager by lazy{ BLEManager(application) }

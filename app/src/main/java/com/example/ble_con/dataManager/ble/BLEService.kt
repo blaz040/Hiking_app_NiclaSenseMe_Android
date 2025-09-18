@@ -12,7 +12,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.ble_con.R
-import com.example.ble_con.dataManager.repo.BroadcastAction
+import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
 
 
 @SuppressLint("MissingPermission")
@@ -86,10 +86,10 @@ class BLEService: Service(){
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d(TAG,"Received Action ${intent?.action}")
             when(intent?.action){
-                BroadcastAction.CONNECTED -> {
+                BluetoothBroadcastAction.CONNECTED -> {
                 //    ViewModelData.setConnectionStatus(ConStatus.CONNECTED)
                 }
-                BroadcastAction.DISCONNECTED -> {
+                BluetoothBroadcastAction.DISCONNECTED -> {
                  //   ViewModelData.setConnectionStatus(ConStatus.DISCONNECTED)
                     disconnect()
                     stopSelf()
@@ -103,8 +103,8 @@ class BLEService: Service(){
         super.onCreate()
         Log.d(TAG,"Registered Receiver")
         val filter = IntentFilter().apply {
-            addAction(BroadcastAction.CONNECTED)
-            addAction(BroadcastAction.DISCONNECTED)
+            addAction(BluetoothBroadcastAction.CONNECTED)
+            addAction(BluetoothBroadcastAction.DISCONNECTED)
         }
 
         registerReceiver(myReceiver, filter, RECEIVER_NOT_EXPORTED)
