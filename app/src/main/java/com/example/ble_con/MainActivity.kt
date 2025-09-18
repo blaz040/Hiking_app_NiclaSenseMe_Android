@@ -49,8 +49,8 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         Log.d(TAG,"onStart....")
-        //requestBLEPermission()
-        //showBluetoothDialog()
+        requestBLEPermission()
+        showBluetoothDialog()
     }
 
     override fun onPause() {

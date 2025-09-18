@@ -13,11 +13,13 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.example.ble_con.dataManager.repo.BroadcastAction
+import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
 import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.repository.ViewModelData
 import java.util.UUID
+import kotlin.math.pow
+import kotlin.math.round
 
 @SuppressLint("MissingPermission")
 class BLEManager(
@@ -26,7 +28,6 @@ class BLEManager(
     private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
     private val envService_UUID = UUID.fromString("0000181A-0000-1000-8000-00805F9B34FB")
-
     private val temp_UUID = UUID.fromString("00002A6E-0000-1000-8000-00805F9B34FB")
     private val humidity_UUID = UUID.fromString("00002A6F-0000-1000-8000-00805F9B34FB")
     private val pressure_UUID = UUID.fromString("00002780-0000-1000-8000-00805F9B34FB")
@@ -36,17 +37,13 @@ class BLEManager(
 
     private val env_characteristics_list = listOf(temp_UUID,humidity_UUID,pressure_UUID,IAQ_UUID,bVOC_UUID,CO2_UUID)
 
-
     private val otherService_UUID = UUID.fromString("00001000-0000-1000-8000-00805F9B34FB")
-
     private val step_UUID = UUID.fromString("000027BA-0000-1000-8000-00805F9B34FB")
     private val messageReceiver_UUID  = UUID.fromString("00001001-0000-1000-8000-00805F9B34FB")
 
     private val other_characteristics_list = listOf(step_UUID)
 
     private var bluetoothGatt: BluetoothGatt? = null
-
-    //private var ble_scanResults = mutableStateMapOf<ScanResult,Int>()
 
     private val bluetoothManager by lazy {context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val bluetoothAdapter by lazy { bluetoothManager.adapter}
@@ -102,8 +99,7 @@ class BLEManager(
         val gattQueue = mutableListOf<() ->Unit>()
         var gattQueueBusy = false
 
-        fun nextGattOperation()
-        {
+        fun nextGattOperation() {
             if(gattQueue.isNotEmpty() && !gattQueueBusy)
             {
                 gattQueueBusy = true
@@ -120,14 +116,14 @@ class BLEManager(
                     Log.d("GATT_CONN", "Connected to GATT server.")
                     gatt.discoverServices()
 
-                    broadcastUpdate(BroadcastAction.CONNECTED)
+                    broadcastUpdate(BluetoothBroadcastAction.CONNECTED)
                     connectionStatus.postValue(ConStatus.CONNECTED)
 
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // Device disconnected
                     Log.d("GATT_CONN", "Disconnected from GATT server.")
 
-                    broadcastUpdate(BroadcastAction.DISCONNECTED)
+                    broadcastUpdate(BluetoothBroadcastAction.DISCONNECTED)
                     connectionStatus.postValue(ConStatus.DISCONNECTED)
 
                     closeConnection()
@@ -168,6 +164,7 @@ class BLEManager(
                 gattQueueBusy = false
                 nextGattOperation()
             }
+
             private fun enableCharacteristicNotification(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
                 gatt.setCharacteristicNotification(characteristic, true)
                 val descriptor = characteristic.getDescriptor(CCCD_UUID)
@@ -181,7 +178,6 @@ class BLEManager(
                     nextGattOperation()
                 }
             }
-
             // Callback for characteristic read operations
             override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: android.bluetooth.BluetoothGattCharacteristic, status: Int) {
                 //super.onCharacteristicRead(gatt, characteristic, status)
@@ -205,42 +201,48 @@ class BLEManager(
         })
     }
 
-    fun onDataReceived(char: BluetoothGattCharacteristic)
-    {
-        val intFormat = BluetoothGattCharacteristic.FORMAT_UINT16
+    fun calcAltitude(pressure: Float): Float {
+        val sea_press = SensorData.seaLevelPressure
+        val temp = SensorData.seaLevelTemperature
+        return round((((sea_press / pressure).pow(1 / 5.257f) - 1.0f) * (temp + 273.15f)) / 0.0065f)
+    }
+    fun onDataReceived(char: BluetoothGattCharacteristic) {
+        val shortFormat = BluetoothGattCharacteristic.FORMAT_UINT16
+        val intFormat = BluetoothGattCharacteristic.FORMAT_UINT32
         when (char.uuid) {
             temp_UUID -> {
-                val floatValue = char.getIntValue(intFormat,0).toFloat()/100
+                val floatValue = char.getIntValue(shortFormat,0).toFloat()/100
                 SensorData.updateList(SensorData._tempList,floatValue)
                 Log.d("GATT_NOTIFY", "Characteristic temp: $floatValue")
             }
             humidity_UUID -> {
-                val value = char.getIntValue(intFormat,0)
-                SensorData.updateList(SensorData._humidityList,char.getIntValue(intFormat,0))
+                val value = char.getIntValue(shortFormat,0)
+                SensorData.updateList(SensorData._humidityList,value)
                 Log.d("GATT_NOTIFY", "Characteristic humidity: $value ")
             }
             pressure_UUID ->{
-                val value = char.getIntValue(intFormat,0)
-                SensorData.updateList(SensorData._pressureList,char.getIntValue(intFormat,0))
-                Log.d("GATT_NOTIFY", "Characteristic pressure: $value ")
+                val pressure = char.getIntValue(intFormat,0).toFloat()/100
+                SensorData.updateList(SensorData._pressureList,pressure)
+                SensorData.updateList(SensorData._altitude,calcAltitude(pressure))
+                Log.d("GATT_NOTIFY", "Characteristic pressure: $pressure ")
             }
             IAQ_UUID -> {
-                val value = char.getIntValue(intFormat,0)
-                SensorData.updateList(SensorData._IAQList,char.getIntValue(intFormat,0))
+                val value = char.getIntValue(shortFormat,0)
+                SensorData.updateList(SensorData._IAQList,value)
                 Log.d("GATT_NOTIFY", "Characteristic IAQ: $value")
             }
             bVOC_UUID -> {
-                val floatValue = char.getIntValue(intFormat,0).toFloat()/100
+                val floatValue = char.getIntValue(shortFormat,0).toFloat()/100
                 SensorData.updateList(SensorData._bVOCList,floatValue)
                 Log.d("GATT_NOTIFY", "Characteristic bVOC: $floatValue")
             }
             CO2_UUID -> {
-                val value = char.getIntValue(intFormat,0)
+                val value = char.getIntValue(shortFormat,0)
                 SensorData.updateList(SensorData._CO2List,value)
                 Log.d("GATT_NOTIFY", "Characteristic CO2: $value ")
             }
-            step_UUID-> {
-                val value = char.getIntValue(intFormat,0)
+            step_UUID -> {
+                val value = char.getIntValue(shortFormat,0)
                 SensorData.updateList(SensorData._stepsList,value)
                 Log.d("GATT_NOTIFY","Characteristic Steps: $value")
             }
@@ -249,7 +251,6 @@ class BLEManager(
             }
         }
     }
-
     fun send(value: Int)
     {
         val service = bluetoothGatt?.getService(otherService_UUID)

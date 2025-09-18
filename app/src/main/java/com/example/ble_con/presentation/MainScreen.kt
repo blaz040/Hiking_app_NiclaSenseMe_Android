@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,24 +33,22 @@ fun MainScreen(
     navController: NavController,
     vm: ViewModel = viewModel()
 ) {
-    Column {
-        // Box used for whitespace
-        Box(modifier = Modifier.fillMaxWidth().height(100.dp))
+    // Box used for whitespace
+    Spacer(modifier = Modifier.height(100.dp))
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ControlButtons(navController,vm)
-                GenScanResults()
-            }
-            StatusInfo()
+            ControlButtons(navController,vm)
+            GenScanResults()
         }
+        StatusInfo()
     }
 }
 @Composable

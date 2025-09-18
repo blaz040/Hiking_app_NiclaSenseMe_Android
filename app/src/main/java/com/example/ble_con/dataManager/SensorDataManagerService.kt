@@ -3,36 +3,48 @@ package com.example.ble_con.dataManager
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.Service
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.le.ScanResult
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.Location
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.ble_con.R
+import com.example.ble_con.SnackbarManager
 import com.example.ble_con.dataManager.ble.BLEManager
-import com.example.ble_con.dataManager.repo.BroadcastAction
+import com.example.ble_con.dataManager.network.WeatherApiManager
+import com.example.ble_con.dataManager.network.data.WeatherResponse
+import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
 import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SendCommand
 import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.repository.ViewModelData
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlin.math.round
 
 
 @SuppressLint("MissingPermission")
 class SensorDataManagerService: Service(){
     private val TAG = "SDMS"
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val ble_api = BLEManager(this)
 
-    private val recording_api = RecordingManager(::onTimerUpdateCallback)
+    private val recording_api = RecordingManager(serviceScope,::onTimerUpdateCallback)
 
-    private val location_api = LocationManager(this,::onLocationUpdateCallback,delay_ms = 3000)
+    private val location_api = LocationManager(this,serviceScope,::onLocationUpdateCallback,delay_ms = 3000)
+
+    private val weather_api = WeatherApiManager(serviceScope,::onWeatherCallback)
 
     private var mNotificationManager: NotificationManager? = null
     private val ble_notificationID = 1
@@ -46,8 +58,7 @@ class SensorDataManagerService: Service(){
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG,"got Intent")
-        when(intent?.action)
-        {
+        when(intent?.action) {
             DEVICE_CONNECT    -> connect(intent)
             DEVICE_SEND       -> send(intent)
             DEVICE_DISCONNECT -> disconnect()
@@ -102,20 +113,24 @@ class SensorDataManagerService: Service(){
         ble_api.send(command)
     }
     private fun startRecording() {
+        weather_api.getWeatherData()
+
         clearData()
-        val timer_notify_builder = NotificationCompat.Builder(this,"timer_channel")
+        val record_timer_notify_builder = NotificationCompat.Builder(this,"timer_channel")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Recording....")
 
-        mNotificationManager = NotificationManager(this,recording_notificationID,timer_notify_builder)
+        mNotificationManager = NotificationManager(this,recording_notificationID,record_timer_notify_builder)
 
         recordingStatus.postValue(RecordingStatus.RUNNING)
 
         ble_api.send(SendCommand.START)
         location_api.start()
         recording_api.start()
+        SnackbarManager.send("Recording started")
     }
     private fun stopRecording() {
+
         recordingStatus.postValue(RecordingStatus.STOPPED)
 
         mNotificationManager?.closeNotification()
@@ -124,29 +139,32 @@ class SensorDataManagerService: Service(){
         ble_api.send(SendCommand.STOP)
         location_api.stop()
         recording_api.stop()
+        SnackbarManager.send("Recording stopped")
     }
     private fun toggleRecording() {
-        when(recordingStatus.value) { // PAUSING recording
-            RecordingStatus.RUNNING -> {
+        when(recordingStatus.value) {
+            RecordingStatus.RUNNING -> { //PAUSING recording
                 ble_api.send(SendCommand.STOP)
-                recordingStatus.postValue(RecordingStatus.PAUSED)
+                recordingStatus.value = RecordingStatus.PAUSED
             }
-            RecordingStatus.PAUSED -> {
+            RecordingStatus.PAUSED -> { // RESUMING recording
                 ble_api.send(SendCommand.START)
-                recordingStatus.postValue(RecordingStatus.RUNNING)
+                recordingStatus.value = RecordingStatus.RUNNING
             }
             else -> { Log.e(TAG,"ERROR toggleRecording ") }
         }
         location_api.toggleRun()
         recording_api.toggleRun()
+
+        SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
     }
 
-    fun translate(value: Int): String {
+    private fun translate(value: Int): String {
         var str = value.toString()
-        if(value <10) str ="0${value.toString()}"
+        if(value <10) str ="0${value}"
         return str
     }
-    fun formatTime(time: Int):String {
+    private fun formatTime(time: Int):String {
         //format 00:00:00
         val seconds = translate(time%60)
         val minutes = translate((time/60)%60)
@@ -161,14 +179,21 @@ class SensorDataManagerService: Service(){
     private fun onLocationUpdateCallback(location: LatLng) {
         SensorData.updateList(SensorData._location,location)
     }
+    private fun onWeatherCallback(response: WeatherResponse){
+        SensorData.seaLevelPressure = response.current.pressure_msl
+        SensorData.seaLevelTemperature = response.current.temperature_2m
+    }
     val myReceiver =  object: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d(TAG,"Received Action ${intent?.action}")
             when(intent?.action){
-                BroadcastAction.CONNECTED -> { }
-                BroadcastAction.DISCONNECTED -> {
+                BluetoothBroadcastAction.CONNECTED -> {
+                    SnackbarManager.send("device Connected")
+                }
+                BluetoothBroadcastAction.DISCONNECTED -> {
                     disconnect()
                     stopSelf()
+                    SnackbarManager.send("device Disconnected")
                 }
             }
         }
@@ -184,8 +209,8 @@ class SensorDataManagerService: Service(){
         super.onCreate()
         Log.d(TAG,"Registered Receiver")
         val filter = IntentFilter().apply {
-            addAction(BroadcastAction.CONNECTED)
-            addAction(BroadcastAction.DISCONNECTED)
+            addAction(BluetoothBroadcastAction.CONNECTED)
+            addAction(BluetoothBroadcastAction.DISCONNECTED)
         }
         registerReceiver(myReceiver, filter, RECEIVER_NOT_EXPORTED)
     }
@@ -194,6 +219,8 @@ class SensorDataManagerService: Service(){
         super.onDestroy()
         Log.d(TAG,"Unregistered receiver")
         unregisterReceiver(myReceiver)
+        serviceScope.cancel()
+
     }
     companion object {
         val RECORDING_START = "start"

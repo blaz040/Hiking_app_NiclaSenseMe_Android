@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.LatLng
 
 object SensorData {
 
-    val maxListSize = 80
+    val maxListSize = 60*60
 
     val _tempList: MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
     val tempList: LiveData<MutableList<Point>> = _tempList
@@ -34,24 +34,19 @@ object SensorData {
     val _location:MutableLiveData<MutableList<LatLng>> = MutableLiveData(mutableListOf())
     val location: LiveData<MutableList<LatLng>> = _location
 
+    val _altitude:MutableLiveData<MutableList<Point>> = MutableLiveData(mutableListOf())
+    val altitude: LiveData<MutableList<Point>> = _altitude
+
     val _time: MutableLiveData<Int> = MutableLiveData(0)
+
+    var seaLevelPressure = 1013.25f // default value
+    var seaLevelTemperature = 20.0f // default value
 
     /* */
     fun <T> MutableLiveData<MutableList<T>>.add(value: T){
 
     }
-    /*
-    fun <T> updateList (list: MutableLiveData<MutableList<T>>, value :T)
-    {
-        val newList = list.value.toMutableList().apply { add(value) }
-
-        if(list.value.size >= maxListSize )
-            newList.removeAt(0)
-
-        list.postValue(newList)
-    }
-    */
-    fun<T: Number> updateList (list: MutableLiveData<MutableList<Point>>, value :T) {
+    fun<T: Number> updateList(list: MutableLiveData<MutableList<Point>>, value :T) {
         val currentTime = _time.value.toFloat()
 
         if(list.value.size >= maxListSize)
@@ -61,7 +56,7 @@ object SensorData {
 
         list.postValue(newList)
     }
-    fun<T: LatLng> updateList (list: MutableLiveData<MutableList<T>>, value :T) {
+    fun updateList (list: MutableLiveData<MutableList<LatLng>>, value : LatLng) {
         if(list.value.size >= maxListSize)
             list.value?.removeAt(0)
 
