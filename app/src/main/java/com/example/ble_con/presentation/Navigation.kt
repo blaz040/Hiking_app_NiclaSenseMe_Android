@@ -50,8 +50,11 @@ fun Navigation(
             composable(Routes.MainScreen) {
                 MainScreen(navController = navController, vm)
             }
-            composable(Routes.DataScren) {
+            composable(Routes.RecordingScren) {
                 SensorDataScreen(vm)
+            }
+            composable(Routes.SavedRecordingsScreen){
+                SavedRecordingsScreen(vm)
             }
         }
     }

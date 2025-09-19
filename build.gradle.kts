@@ -8,6 +8,9 @@ plugins {
     alias(libs.plugins.hiltAndroid) apply false
     alias(libs.plugins.kotlinAndroidKsp) apply false
 
+    alias(libs.plugins.kotlin.serialization) apply false
+    //kotlin("plugin.serialization") version "2.0.0"
+
 }
 buildscript {
     dependencies {

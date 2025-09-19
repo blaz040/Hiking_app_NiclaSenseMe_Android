@@ -3,7 +3,6 @@ package com.example.ble_con.dataManager
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.Service
-import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.le.ScanResult
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -23,14 +22,13 @@ import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SendCommand
 import com.example.ble_con.dataManager.repo.SensorData
+import com.example.ble_con.dataManager.repo.add
 import com.example.ble_con.repository.ViewModelData
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlin.math.round
-
 
 @SuppressLint("MissingPermission")
 class SensorDataManagerService: Service(){
@@ -70,13 +68,7 @@ class SensorDataManagerService: Service(){
         return super.onStartCommand(intent, flags, startId)
     }
     private fun clearData(){
-        SensorData._tempList.value?.clear()
-        SensorData._CO2List.value?.clear()
-        SensorData._bVOCList.value?.clear()
-        SensorData._IAQList.value?.clear()
-        SensorData._humidityList.value?.clear()
-        SensorData._pressureList.value?.clear()
-        SensorData._stepsList.value?.clear()
+        SensorData.clearData()
     }
 
     private fun connect(intent: Intent) {
@@ -102,7 +94,7 @@ class SensorDataManagerService: Service(){
         startForeground(ble_notificationID,ble_builder)
     }
     private fun disconnect() {
-        stopRecording()
+        if(recordingStatus.value != RecordingStatus.STOPPED) stopRecording()
         connected_device.postValue(null)
         ble_api.disconnect()
         Log.d(TAG,"DISCONNECTED")
@@ -130,7 +122,6 @@ class SensorDataManagerService: Service(){
         SnackbarManager.send("Recording started")
     }
     private fun stopRecording() {
-
         recordingStatus.postValue(RecordingStatus.STOPPED)
 
         mNotificationManager?.closeNotification()
@@ -177,7 +168,7 @@ class SensorDataManagerService: Service(){
         SensorData.updateTime(value)
     }
     private fun onLocationUpdateCallback(location: LatLng) {
-        SensorData.updateList(SensorData._location,location)
+        SensorData.location.add(location)
     }
     private fun onWeatherCallback(response: WeatherResponse){
         SensorData.seaLevelPressure = response.current.pressure_msl

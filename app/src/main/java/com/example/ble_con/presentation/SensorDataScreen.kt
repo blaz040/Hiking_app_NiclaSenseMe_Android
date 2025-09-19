@@ -55,7 +55,6 @@ import kotlinx.coroutines.selects.select
 fun SensorDataScreen(
     vm: ViewModel = viewModel()
 ) {
-
     // Box used for whitespace
     Spacer(modifier = Modifier.height(100.dp))
     val scrollState = rememberScrollState()
@@ -66,6 +65,7 @@ fun SensorDataScreen(
     ){
         val selectedData = remember { mutableStateOf(ViewModelData.nothing)}
         Column(Modifier.fillMaxWidth()){
+
             ControlButtons(vm)
 
             val time = ViewModelData.time.observeAsState(0).value
@@ -95,7 +95,7 @@ fun SensorDataScreen(
 
 @Composable
 fun ShowMap() {
-    val locationList = SensorData.location.observeAsState().value
+    val locationList = SensorData.location.liveData.observeAsState().value
     var startLocation = when(locationList!!.isEmpty()) {
         true -> LatLng(46.05,14.50)// Ljubljana
         false -> locationList.first()
@@ -199,6 +199,10 @@ fun ControlButtons(vm:ViewModel = viewModel()) {
             Text(text = resume_pause, color = Color.White)
         }
         Text(text = "Recording : ${recordingStatus}",color = Color.Black)
+
+        Button({vm.saveRecording()}) {
+            Text(text = "Save", color = Color.White)
+        }
     }
 }
 @Composable

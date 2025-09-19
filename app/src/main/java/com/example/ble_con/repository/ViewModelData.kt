@@ -4,33 +4,24 @@ import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import co.yml.charts.common.model.Point
 import com.example.ble_con.R
-import com.example.ble_con.ViewModel
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SensorData
-import com.example.ble_con.presentation.HumidityGraph
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 object ViewModelData {
     data class DataInfo(val name:String,val icon:Int,val postFix:String, val list:LiveData<MutableList<Point>>)
-    val nothing = DataInfo("null",-1,"",SensorData.humidityList)
+    val nothing = DataInfo("null",-1,"",SensorData.humidity.liveData)
 
-    val humidity = DataInfo("Humidity",R.drawable.humidity_icon," %",SensorData.humidityList)
-    val temperature = DataInfo("Temperature",R.drawable.temp_icon," C",SensorData.tempList)
-    val pressure = DataInfo("Pressure",R.drawable.pressure_icon," hPa",SensorData.pressureList)
-    val steps = DataInfo("Steps",R.drawable.steps_icon,"",SensorData.stepsList)
-    val airQuality = DataInfo("Air Quality",R.drawable.air_quiality_icon,"",SensorData.IAQList)
-    val voc = DataInfo("VOC",R.drawable.voc_icon,"",SensorData.bVOCList)
-    val co2 = DataInfo("CO2",R.drawable.co2_icon,"",SensorData.CO2List)
-    val altitude = DataInfo("Altitude",R.drawable.co2_icon," m",SensorData.altitude)
+    val humidity =      DataInfo("Humidity",R.drawable.humidity_icon," %",SensorData.humidity.liveData)
+    val temperature =   DataInfo("Temperature",R.drawable.temp_icon," C",SensorData.temperature.liveData)
+    val pressure =      DataInfo("Pressure",R.drawable.pressure_icon," hPa",SensorData.pressure.liveData)
+    val steps =         DataInfo("Steps",R.drawable.steps_icon,"",SensorData.steps.liveData)
+    val airQuality =    DataInfo("Air Quality",R.drawable.air_quiality_icon,"",SensorData.iaq.liveData)
+    val voc =           DataInfo("VOC",R.drawable.voc_icon,"",SensorData.voc.liveData)
+    val co2 =           DataInfo("CO2",R.drawable.co2_icon,"",SensorData.co2.liveData)
+    val altitude =      DataInfo("Altitude",R.drawable.co2_icon," m",SensorData.altitude.liveData)
 
     val _scanResultMap = MutableLiveData<MutableMap<String,ScanResult>>(mutableMapOf<String,ScanResult>())
     val scanResultMap: MutableLiveData<MutableMap<String,ScanResult>> = _scanResultMap
@@ -67,5 +58,4 @@ object ViewModelData {
     }
     fun setSelectedDevice(result: ScanResult?) = _selectedDevice.postValue(result)
     fun setConnectionStatus(status: String) = _conStatus.postValue(status)
-
 }

@@ -318,7 +318,7 @@ fun Graph(list: LiveData<MutableList<Point>>)
     if(points.isEmpty()) points.add(Point(0f,0f))
     Line_Graph(points)
 }
-
+/*
 @Composable
 fun TempGraph()
 {
@@ -380,3 +380,4 @@ fun StepsGraph()
     if(steps.isEmpty()) steps.add(Point(0f,0f))
     Line_Graph(steps)
 }
+*/
