@@ -20,11 +20,11 @@ class LocationManager(
     val onLocationReceived: (LatLng) ->Unit,
     val delay_ms:Long = 5000
 ) {
-    private var run = false
-    private var locationClient: FusedLocationProviderClient? = null
-    private var timerJob: Job? = null
-
     private val TAG = "LocationManager"
+
+    private var run = false
+    private var timerJob: Job? = null
+    private var locationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
     fun start() {
         Log.d(TAG,"Starting...")
@@ -33,8 +33,6 @@ class LocationManager(
 
     private fun startTracking() {
         timerJob?.cancel()
-
-        locationClient = LocationServices.getFusedLocationProviderClient(context)
         run = true
         timerJob = serviceScope.launch {
             while(true) {

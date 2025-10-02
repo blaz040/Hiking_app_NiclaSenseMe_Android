@@ -1,6 +1,7 @@
-package com.example.ble_con.presentation
+package com.example.ble_con.presentation.MainScreen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +52,13 @@ fun MainScreen(
             GenScanResults()
         }
         StatusInfo()
+        Button(
+            onClick = {
+                navController.navigate(Routes.SavedRecordingsScreen)
+            }
+        ) {
+            Text(text = "See recorded Hikes", color = Color.White)
+        }
     }
 }
 @Composable
@@ -59,29 +69,34 @@ fun ControlButtons(
     Column {
         Button(
             onClick = {
-                navController.navigate(Routes.DataScren)
+                navController.navigate(Routes.RecordingScren)
             }
         ) {
             Text(text = "Start", color = Color.White)
         }
-        Button(onClick = { vm.disconnect() })
-        {
+        Button(onClick = { vm.disconnect() }) {
             Text(text = "Disconnect", color = Color.White)
         }
-        Button(onClick = { vm.scanBLE() })
-        {
+        Button(onClick = { vm.scanBLE() }) {
             Text(text = "Scan", color = Color.White)
         }
+        val scanStatus = ViewModelData.scanningStatus.observeAsState().value
+        Text("Scanning: $scanStatus", Modifier.padding(5.dp))
     }
 }
 @SuppressLint("MissingPermission")
 @Composable
 fun GenScanResults(vm: ViewModel = viewModel())
 {
-    Column {
+    Column(Modifier.padding(5.dp).sizeIn(300.dp,200.dp,300.dp,300.dp).border(2.dp,color = Color.Black,shape = RoundedCornerShape(10.dp))) {
+        var first = true
         val scanResults = ViewModelData.scanResultMap.observeAsState().value
         if(scanResults != null) for (result in scanResults.values) {
-            Card(
+            if(!first){
+                HorizontalDivider(thickness = 2.dp)
+            }
+            first = false
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(5.dp)
@@ -113,34 +128,6 @@ fun StatusInfo()
         }
         Text(text = "Connection: ${connectionStatus}")
 
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        /*
-    val tempValue by vm.tempValue.observeAsState(mutableListOf(0f))
-
-    Log.d("LIVE_DATA","updated temp list")
-    if(tempValue.last() != 0f)
-    {
-        Text(text = "Temp: ${tempValue.last()} C")
-    }
-    */
-
-        /*
-    if(sData.value.humidity_value != -1)
-        Text(text = "Humidity ${sData.value.humidity_value} %")
-    if(sData.value.IAQ_value != -1)
-        Text(text = "IAQ ${sData.value.IAQ_value}")
-    if(sData.value.bVOC_value != 0f)
-        Text(text = "bVOC ${sData.value.bVOC_value}")
-    if(sData.value.CO2_value != -1)
-        Text(text = "CO2 ${sData.value.CO2_value}")
-*/
     }
 
 }

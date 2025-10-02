@@ -13,9 +13,11 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
 import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.SensorData
+import com.example.ble_con.dataManager.repo.add
 import com.example.ble_con.repository.ViewModelData
 import java.util.UUID
 import kotlin.math.pow
@@ -49,7 +51,7 @@ class BLEManager(
     private val bluetoothAdapter by lazy { bluetoothManager.adapter}
     private val bluetoothLeScanner by lazy { bluetoothAdapter.bluetoothLeScanner }
 
-    private var scanning = false
+    private var scanning = ViewModelData._scanningStatus
     private val handler = android.os.Handler()
 
     private val connectionStatus = ViewModelData._conStatus
@@ -58,17 +60,19 @@ class BLEManager(
      private val SCAN_PERIOD: Long = 10000
 
 
-    fun scanLeDevice() {
-        if (!scanning) { // Stops scanning after a pre-defined scan period.
+    fun scanBleDevice() {
+        if (!scanning.value) { // Stops scanning after a pre-defined scan period.
             handler.postDelayed({
-                scanning = false
+                SnackbarManager.send("Stopped Scanning...")
+                scanning.postValue(false)
                 bluetoothLeScanner.stopScan(leScanCallback)
             }, SCAN_PERIOD)
+            SnackbarManager.send("Scanning...")
             ViewModelData.clearScanResult()
-            scanning = true
+            scanning.postValue(true)
             bluetoothLeScanner?.startScan(leScanCallback)
         } else {
-            scanning = false
+            scanning.postValue(false)
             bluetoothLeScanner?.stopScan(leScanCallback)
         }
     }
@@ -203,7 +207,7 @@ class BLEManager(
 
     fun calcAltitude(pressure: Float): Float {
         val sea_press = SensorData.seaLevelPressure
-        val temp = SensorData.seaLevelTemperature
+        val temp = SensorData.temperature.getList().last().y
         return round((((sea_press / pressure).pow(1 / 5.257f) - 1.0f) * (temp + 273.15f)) / 0.0065f)
     }
     fun onDataReceived(char: BluetoothGattCharacteristic) {
@@ -212,38 +216,40 @@ class BLEManager(
         when (char.uuid) {
             temp_UUID -> {
                 val floatValue = char.getIntValue(shortFormat,0).toFloat()/100
-                SensorData.updateList(SensorData._tempList,floatValue)
+                SensorData.temperature.add(floatValue)
                 Log.d("GATT_NOTIFY", "Characteristic temp: $floatValue")
             }
             humidity_UUID -> {
                 val value = char.getIntValue(shortFormat,0)
-                SensorData.updateList(SensorData._humidityList,value)
+                SensorData.humidity.add(value)
                 Log.d("GATT_NOTIFY", "Characteristic humidity: $value ")
             }
             pressure_UUID ->{
                 val pressure = char.getIntValue(intFormat,0).toFloat()/100
-                SensorData.updateList(SensorData._pressureList,pressure)
-                SensorData.updateList(SensorData._altitude,calcAltitude(pressure))
+                SensorData.pressure.add(pressure)
+                SensorData.altitude.add(calcAltitude(pressure))
+
                 Log.d("GATT_NOTIFY", "Characteristic pressure: $pressure ")
             }
             IAQ_UUID -> {
                 val value = char.getIntValue(shortFormat,0)
-                SensorData.updateList(SensorData._IAQList,value)
+                SensorData.iaq.add(value)
+
                 Log.d("GATT_NOTIFY", "Characteristic IAQ: $value")
             }
             bVOC_UUID -> {
                 val floatValue = char.getIntValue(shortFormat,0).toFloat()/100
-                SensorData.updateList(SensorData._bVOCList,floatValue)
+                SensorData.voc.add(floatValue)
                 Log.d("GATT_NOTIFY", "Characteristic bVOC: $floatValue")
             }
             CO2_UUID -> {
                 val value = char.getIntValue(shortFormat,0)
-                SensorData.updateList(SensorData._CO2List,value)
+                SensorData.co2.add(value)
                 Log.d("GATT_NOTIFY", "Characteristic CO2: $value ")
             }
             step_UUID -> {
                 val value = char.getIntValue(shortFormat,0)
-                SensorData.updateList(SensorData._stepsList,value)
+                SensorData.steps.add(value)
                 Log.d("GATT_NOTIFY","Characteristic Steps: $value")
             }
             else -> {

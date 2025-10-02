@@ -2,21 +2,19 @@ package com.example.ble_con
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.LocationManager
-import android.location.LocationRequest
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.ble_con.presentation.Navigation
+import com.example.ble_con.ui.theme.AppTheme
 
 @SuppressLint("MissingPermission")
 class MainActivity : ComponentActivity() {
@@ -28,6 +26,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         Log.d(TAG,"onCreate....")
 
@@ -38,7 +37,9 @@ class MainActivity : ComponentActivity() {
         bluetoothAdapter = bluetoothManager.adapter
 
         setContent {
-            Navigation()
+            AppTheme {
+                Navigation()
+            }
         }
     }
     override fun onDestroy(){

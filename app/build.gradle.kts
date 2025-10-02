@@ -6,6 +6,9 @@ plugins {
     //Hilt
     alias(libs.plugins.kotlinAndroidKsp)
     alias(libs.plugins.hiltAndroid)
+
+    alias(libs.plugins.kotlin.serialization)
+
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
@@ -54,7 +57,6 @@ android {
         defaultPropertiesFileName = "local.defaults.properties"
     }
 }
-
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -82,7 +84,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     val lifecycle_version = "2.9.2"
-    val arch_version = "2.2.0"
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
@@ -114,4 +115,6 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // Retrofit Gson converter
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // JSON serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 }
