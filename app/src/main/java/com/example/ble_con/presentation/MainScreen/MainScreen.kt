@@ -1,4 +1,4 @@
-package com.example.ble_con.presentation
+package com.example.ble_con.presentation.MainScreen
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.border
@@ -8,16 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,7 +57,7 @@ fun MainScreen(
                 navController.navigate(Routes.SavedRecordingsScreen)
             }
         ) {
-            Text(text = "See recorded hikings", color = Color.White)
+            Text(text = "See recorded Hikes", color = Color.White)
         }
     }
 }
@@ -83,6 +80,8 @@ fun ControlButtons(
         Button(onClick = { vm.scanBLE() }) {
             Text(text = "Scan", color = Color.White)
         }
+        val scanStatus = ViewModelData.scanningStatus.observeAsState().value
+        Text("Scanning: $scanStatus", Modifier.padding(5.dp))
     }
 }
 @SuppressLint("MissingPermission")

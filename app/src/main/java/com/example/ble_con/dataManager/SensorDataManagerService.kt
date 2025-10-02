@@ -13,7 +13,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.ble_con.R
-import com.example.ble_con.SnackbarManager
+import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.dataManager.ble.BLEManager
 import com.example.ble_con.dataManager.network.WeatherApiManager
 import com.example.ble_con.dataManager.network.data.WeatherResponse
@@ -62,7 +62,9 @@ class SensorDataManagerService: Service(){
             DEVICE_DISCONNECT -> disconnect()
             RECORDING_START   -> startRecording()
             RECORDING_STOP    -> stopRecording()
-            RECORDING_PAUSE, RECORDING_RESUME, RECORDING_TOGGLE   -> toggleRecording()
+            RECORDING_PAUSE   -> pauseRecording()
+            RECORDING_RESUME  -> resumeRecording()
+            RECORDING_TOGGLE  -> toggleRecording()
             else -> Log.e(TAG,"Wrong action for SensorDataManagerService")
         }
         return super.onStartCommand(intent, flags, startId)
@@ -131,6 +133,28 @@ class SensorDataManagerService: Service(){
         location_api.stop()
         recording_api.stop()
         SnackbarManager.send("Recording stopped")
+    }
+    private fun pauseRecording(){
+        if(recordingStatus.value == RecordingStatus.RUNNING) { //PAUSING recording
+            ble_api.send(SendCommand.STOP)
+            recordingStatus.value = RecordingStatus.PAUSED
+
+            location_api.toggleRun()
+            recording_api.toggleRun()
+
+            SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
+        }
+    }
+    private fun resumeRecording(){
+        if(recordingStatus.value == RecordingStatus.PAUSED){ // RESUMING recording
+            ble_api.send(SendCommand.START)
+            recordingStatus.value = RecordingStatus.RUNNING
+
+            location_api.toggleRun()
+            recording_api.toggleRun()
+
+            SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
+        }
     }
     private fun toggleRecording() {
         when(recordingStatus.value) {

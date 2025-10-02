@@ -12,8 +12,8 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
-import android.hardware.Sensor
 import android.util.Log
+import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
 import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.SensorData
@@ -51,7 +51,7 @@ class BLEManager(
     private val bluetoothAdapter by lazy { bluetoothManager.adapter}
     private val bluetoothLeScanner by lazy { bluetoothAdapter.bluetoothLeScanner }
 
-    private var scanning = false
+    private var scanning = ViewModelData._scanningStatus
     private val handler = android.os.Handler()
 
     private val connectionStatus = ViewModelData._conStatus
@@ -60,17 +60,19 @@ class BLEManager(
      private val SCAN_PERIOD: Long = 10000
 
 
-    fun scanLeDevice() {
-        if (!scanning) { // Stops scanning after a pre-defined scan period.
+    fun scanBleDevice() {
+        if (!scanning.value) { // Stops scanning after a pre-defined scan period.
             handler.postDelayed({
-                scanning = false
+                SnackbarManager.send("Stopped Scanning...")
+                scanning.postValue(false)
                 bluetoothLeScanner.stopScan(leScanCallback)
             }, SCAN_PERIOD)
+            SnackbarManager.send("Scanning...")
             ViewModelData.clearScanResult()
-            scanning = true
+            scanning.postValue(true)
             bluetoothLeScanner?.startScan(leScanCallback)
         } else {
-            scanning = false
+            scanning.postValue(false)
             bluetoothLeScanner?.stopScan(leScanCallback)
         }
     }
@@ -205,7 +207,7 @@ class BLEManager(
 
     fun calcAltitude(pressure: Float): Float {
         val sea_press = SensorData.seaLevelPressure
-        val temp = SensorData.seaLevelTemperature
+        val temp = SensorData.temperature.getList().last().y
         return round((((sea_press / pressure).pow(1 / 5.257f) - 1.0f) * (temp + 273.15f)) / 0.0065f)
     }
     fun onDataReceived(char: BluetoothGattCharacteristic) {

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
 import com.example.ble_con.R
+import com.example.ble_con.fileManager.FileData
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SensorData
 
@@ -21,13 +22,20 @@ object ViewModelData {
     val airQuality =    DataInfo("Air Quality",R.drawable.air_quiality_icon,"",SensorData.iaq.liveData)
     val voc =           DataInfo("VOC",R.drawable.voc_icon,"",SensorData.voc.liveData)
     val co2 =           DataInfo("CO2",R.drawable.co2_icon,"",SensorData.co2.liveData)
-    val altitude =      DataInfo("Altitude",R.drawable.co2_icon," m",SensorData.altitude.liveData)
+    val altitude =      DataInfo("Altitude",R.drawable.altitude_icon," m",SensorData.altitude.liveData)
+
+    val listOfDataInfo = listOf(humidity,temperature,pressure,steps,airQuality,voc,co2,altitude)
 
     val _scanResultMap = MutableLiveData<MutableMap<String,ScanResult>>(mutableMapOf<String,ScanResult>())
     val scanResultMap: MutableLiveData<MutableMap<String,ScanResult>> = _scanResultMap
 
+    private val _fileList = MutableLiveData<List<FileData>>(listOf())
+    val fileList: LiveData<List<FileData>> = _fileList
+
     val _selectedDevice: MutableLiveData<ScanResult?> = MutableLiveData<ScanResult?>(null)
     val selectedDevice: LiveData<ScanResult?> = _selectedDevice
+
+    var fileData = FileData("null","null")
 
     val _conStatus = MutableLiveData<String>("Disconnected")
     val conStatus: LiveData<String> = _conStatus
@@ -39,6 +47,9 @@ object ViewModelData {
     val currentStatus:LiveData<String> = _currentStatus
 
     val time : LiveData<Int> = SensorData._time
+
+    val _scanningStatus = MutableLiveData<Boolean>(false)
+    val scanningStatus: LiveData<Boolean> = _scanningStatus
 
     fun addScanResult(result: ScanResult) {
         if(_scanResultMap.value != null) {
@@ -56,6 +67,9 @@ object ViewModelData {
         val map = _scanResultMap.value.toMutableMap().apply{ clear() }
         _scanResultMap.value = map
     }
+
+    fun updateFileList(list:List<FileData>) = _fileList.postValue(list)
+
     fun setSelectedDevice(result: ScanResult?) = _selectedDevice.postValue(result)
     fun setConnectionStatus(status: String) = _conStatus.postValue(status)
 }

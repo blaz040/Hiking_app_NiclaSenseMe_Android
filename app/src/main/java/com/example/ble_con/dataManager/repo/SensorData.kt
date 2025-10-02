@@ -2,6 +2,8 @@ package com.example.ble_con.dataManager.repo
 
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
+import com.example.ble_con.R
+import com.example.ble_con.repository.ViewModelData.DataInfo
 import com.google.android.gms.maps.model.LatLng
 
 object SensorData {
@@ -17,6 +19,18 @@ object SensorData {
 
     val location = DataList<LatLng>()
 
+    val data:Map<String,DataList<out Any>> = mapOf(
+        "Temperature"   to temperature,
+        "Humidity"      to humidity,
+        "Pressure"      to pressure,
+        "Altitude"      to altitude,
+        "Steps"         to steps,
+        "Iaq"           to iaq,
+        "Voc"           to voc,
+        "Co2"           to co2,
+        "Location"      to location,
+    )
+    
     val _time: MutableLiveData<Int> = MutableLiveData(0)
 
     var seaLevelPressure = 1013.25f // default value

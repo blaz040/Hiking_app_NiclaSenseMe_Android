@@ -2,10 +2,8 @@ package com.example.ble_con.dataManager.network
 
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
-import com.example.ble_con.SnackbarManager
-import com.example.ble_con.dataManager.network.data.CurrentData
+import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.dataManager.network.data.WeatherResponse
-import com.google.android.gms.maps.OnMapReadyCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -33,7 +31,7 @@ class WeatherApiManager(
                 val response = retrofitService.getWeather()
                 callback(response)
                 Log.d("WEATHER",response.toString())
-                SnackbarManager.send("got weather data :${response.current.pressure_msl} hPa", duration = SnackbarDuration.Long)
+                SnackbarManager.send("got weather data :${response.current.pressure_msl} hPa, ${response.current.temperature_2m} C", duration = SnackbarDuration.Long)
             }catch (e: Exception){
                 Log.e("WEATHER","Trying again in ${delay_ms/1000}s : "+e.toString())
                 SnackbarManager.send("Failed to get weather data Trying again in ${delay_ms/1000} s", duration = SnackbarDuration.Long)

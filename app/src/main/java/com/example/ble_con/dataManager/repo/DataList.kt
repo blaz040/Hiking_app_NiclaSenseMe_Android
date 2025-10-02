@@ -7,40 +7,49 @@ import com.example.ble_con.dataManager.repo.SensorData._time
 import com.google.android.gms.maps.model.LatLng
 
 class DataList<T>{
-    val maxListSize = 60*60
+    val maxListSize = 60*60*5 // 5h vredno podatkov
 
-    val mutableList: MutableLiveData<MutableList<T>> = MutableLiveData(mutableListOf())
-    val liveData: LiveData<MutableList<T>> = mutableList
+    val mutableList: MutableList<T> = mutableListOf()
+    val mutableLiveDataList = MutableLiveData<MutableList<T>>(mutableListOf())
+    val liveData: LiveData<MutableList<T>> = mutableLiveDataList
 
     fun clear(){
-        mutableList.value.clear()
+        mutableList.clear()
     }
     fun getList(): List<T> {
+        return mutableList.toList()
+        /*
         var list = mutableListOf<T>()
         mutableList.value?.let{
             list = it
         }
         return list.toList()
+        */
     }
 
+}
+
+fun DataList<Point>.add(value: Point){
+    mutableList.add(value)
+    mutableLiveDataList.postValue( mutableList.toMutableList() )
 }
 fun <T:Number>DataList<Point>.add(value: T){
     val list = this.mutableList
     val currentTime = _time.value.toFloat()
 
-    if(list.value.size >= maxListSize)
-        list.value?.removeAt(0)
+    if(list.size >= maxListSize)
+        list?.removeAt(0)
 
-    val newList = list.value.toMutableList().apply{ add(Point(currentTime, value.toFloat()))}
+    list.add(Point(currentTime, value.toFloat()))
 
-    list.postValue(newList)
+    this.mutableLiveDataList.postValue( list.toMutableList() )
 }
 fun DataList<LatLng>.add(value: LatLng){
     val list = this.mutableList
-    if(list.value.size >= maxListSize)
-        list.value?.removeAt(0)
+    if(list.size >= maxListSize)
+        list?.removeAt(0)
 
-    val newList = list.value.toMutableList().apply { add(value) }
+    list.add(value)
 
-    list.postValue(newList)
+    this.mutableLiveDataList.postValue(list.toMutableList())
 }

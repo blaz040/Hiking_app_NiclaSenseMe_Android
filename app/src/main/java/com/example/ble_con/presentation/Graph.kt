@@ -36,7 +36,7 @@ import co.yml.charts.ui.linechart.model.LineType
 import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
-import com.example.ble_con.dataManager.repo.SensorData
+import com.example.ble_con.presentation.SensorDataScreen.formatTime
 import kotlin.math.abs
 import kotlin.math.log10
 
@@ -107,6 +107,7 @@ fun formatPopUp(x:Float, y:Float): String {
     var str:String = "time: ${formatTime(x.toInt())}, y: $y"
     return str
 }
+
 @Composable
 fun <T:Number>Graph_old(list: List<T>, maxValue: Float, minValue: Float, strokeColor: Color, strokeWidth: Float = 1f, lineSpace: Float = 10f)
 {
@@ -220,7 +221,7 @@ fun <T:Number>Flexible_Graph(list: List<T>,bonus_path_offset:Float = 0.1f, strok
     }
 }
 
-fun <T: Number>generatePath(list: List<T>, size: androidx.compose.ui.geometry.Size, maxValue :Float,minValue: Float) : Path
+fun <T: Number>generatePath(list: List<T>, size: Size, maxValue :Float,minValue: Float) : Path
 {
 
     val path = Path()
@@ -243,6 +244,8 @@ fun <T: Number>generatePath(list: List<T>, size: androidx.compose.ui.geometry.Si
 }
 @Composable
 fun Line_Graph(pointList: List<Point>){
+    val backgroundColor = MaterialTheme.colorScheme.surface
+
     val maxValue = pointList.max()
     val minValue = pointList.min()
     val diff = maxValue - minValue
@@ -256,23 +259,23 @@ fun Line_Graph(pointList: List<Point>){
 
     val xAxisData = AxisData.Builder()
         .axisStepSize(100.dp)
-        .backgroundColor(Color.Transparent)
+        .backgroundColor(backgroundColor)
         .steps(Xsteps)
-        .labelData { i -> formatTime(firstTime+i) }
+        .labelData { i -> formatTime(firstTime + i) }
         .labelAndAxisLinePadding(15.dp)
         .axisLineColor(MaterialTheme.colorScheme.tertiary)
-        .axisLabelColor(MaterialTheme.colorScheme.tertiary)
+        .axisLabelColor(MaterialTheme.colorScheme.inverseSurface)
         .build()
     val yAxisData = AxisData.Builder()
         .steps(Ysteps)
-        .backgroundColor(Color.Transparent)
+        .backgroundColor(backgroundColor)
         .labelAndAxisLinePadding(20.dp)
         .labelData { i->
             val yScale = diff / Ysteps
             (minValue + i * yScale).toString()
         }
         .axisLineColor(MaterialTheme.colorScheme.tertiary)
-        .axisLabelColor(MaterialTheme.colorScheme.tertiary)
+        .axisLabelColor(MaterialTheme.colorScheme.inverseSurface)
         .build()
     val lineChartData = LineChartData(
         linePlotData = LinePlotData(
@@ -301,7 +304,7 @@ fun Line_Graph(pointList: List<Point>){
         yAxisData = yAxisData,
         xAxisData = xAxisData,
         gridLines = GridLines(color = MaterialTheme.colorScheme.tertiary),
-        backgroundColor = MaterialTheme.colorScheme.surface
+        backgroundColor = backgroundColor
     )
     LineChart(
         modifier = Modifier
