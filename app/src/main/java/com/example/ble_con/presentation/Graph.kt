@@ -36,7 +36,7 @@ import co.yml.charts.ui.linechart.model.LineType
 import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
-import com.example.ble_con.presentation.SensorDataScreen.formatTime
+import com.example.ble_con.presentation.Screens.formatTime
 import kotlin.math.abs
 import kotlin.math.log10
 

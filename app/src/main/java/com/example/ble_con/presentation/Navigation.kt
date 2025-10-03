@@ -18,10 +18,10 @@ import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.ViewModel
 import com.example.ble_con.dataManager.repo.ConnectionStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
-import com.example.ble_con.presentation.AnalyzeScreen.AnalyzeScreen
-import com.example.ble_con.presentation.MainScreen.MainScreen
-import com.example.ble_con.presentation.SavedRecordingsScreen.SavedRecordingsScreen
-import com.example.ble_con.presentation.SensorDataScreen.SensorDataScreen
+import com.example.ble_con.presentation.Screens.AnalyzeScreen
+import com.example.ble_con.presentation.Screens.MainScreen
+import com.example.ble_con.presentation.Screens.SavedRecordingsScreen
+import com.example.ble_con.presentation.Screens.SensorDataScreen
 import com.example.ble_con.repository.Routes
 import com.example.ble_con.repository.ViewModelData
 

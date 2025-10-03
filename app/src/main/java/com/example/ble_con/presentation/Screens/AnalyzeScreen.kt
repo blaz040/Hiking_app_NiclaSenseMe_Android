@@ -1,11 +1,10 @@
-package com.example.ble_con.presentation.AnalyzeScreen
+package com.example.ble_con.presentation.Screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.ViewModel
-import com.example.ble_con.presentation.SavedRecordingsScreen.DisplayTitle
 import com.example.ble_con.presentation.ShowDataBlock
 import com.example.ble_con.presentation.ShowGraph
 import com.example.ble_con.presentation.ShowMap
@@ -33,24 +31,26 @@ fun AnalyzeScreen(
     vm: ViewModel = viewModel()
 ) {
     // Box used for whitespace
-    Spacer(modifier = Modifier.height(100.dp))
+    Spacer(modifier = Modifier.Companion.height(100.dp))
     val scrollState = rememberScrollState()
-    Column(Modifier
-        .fillMaxSize()
-        .verticalScroll(scrollState)
+    Column(
+        Modifier.Companion
+            .fillMaxSize()
+            .verticalScroll(scrollState)
     ) {
         DisplayTitle(ViewModelData.fileData.name)
-        ViewModelData.listOfDataInfo.forEach { data->
+        ViewModelData.listOfDataInfo.forEach { data ->
 
-            val showGraph = remember{ mutableStateOf(false)}
-            ShowDataBlock(data,modifier = Modifier
-                .width(500.dp)
-                .clickable{
-                SnackbarManager.send("Clicked... ")
-                showGraph.value = !showGraph.value
-            //    display.value != display.value
-            }) {
-                if(showGraph.value == true)
+            val showGraph = remember { mutableStateOf(false) }
+            ShowDataBlock(
+                data, modifier = Modifier.Companion
+                    .width(500.dp)
+                    .clickable {
+                        SnackbarManager.send("Clicked... ")
+                        showGraph.value = !showGraph.value
+                        //    display.value != display.value
+                    }) {
+                if (showGraph.value == true)
                     ShowGraph(data)
 
             }
@@ -58,6 +58,7 @@ fun AnalyzeScreen(
         ShowMap()
     }
 }
+
 @Composable
 fun Alert(
     onDismissRequest: () -> Unit,

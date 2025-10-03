@@ -26,7 +26,7 @@ class FileManager(
     private val recordingsPath = context.dataDir.path + recordingsFolderName
     private val recordingsFolder = File(context.dataDir,recordingsFolderName)
     private val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm", Locale.getDefault())
-    private val saveDateFormat = SimpleDateFormat("MM-DD-YYYY_HH:mm", Locale.getDefault())
+    private val saveDateFormat = SimpleDateFormat("MM-DD-yyyy_HH:mm", Locale.getDefault())
     private val scope = CoroutineScope(Dispatchers.IO)
 
     val module = SerializersModule {

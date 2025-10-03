@@ -1,4 +1,4 @@
-package com.example.ble_con.presentation.SensorDataScreen
+package com.example.ble_con.presentation.Screens
 
 import android.util.Log
 import androidx.compose.foundation.border
@@ -71,26 +71,38 @@ fun SensorDataScreen(
         }
         MyHorizontalDivider()
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            ShowDataBlock(ViewModelData.altitude, showDataValue = true, modifier = Modifier.clickable {
-                selectedData?.value = ViewModelData.altitude
-            })
+            ShowDataBlock(
+                ViewModelData.altitude,
+                showDataValue = true,
+                modifier = Modifier.clickable {
+                    selectedData?.value = ViewModelData.altitude
+                })
         }
         Row(Modifier
             .fillMaxWidth()
             .wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowDataBlock(ViewModelData.humidity, showDataValue = true, modifier = Modifier.clickable {
-                selectedData?.value = ViewModelData.humidity
-            })
-            ShowDataBlock(ViewModelData.pressure, showDataValue = true, modifier = Modifier.clickable {
-                selectedData?.value = ViewModelData.pressure
-            })
+            ShowDataBlock(
+                ViewModelData.humidity,
+                showDataValue = true,
+                modifier = Modifier.clickable {
+                    selectedData?.value = ViewModelData.humidity
+                })
+            ShowDataBlock(
+                ViewModelData.pressure,
+                showDataValue = true,
+                modifier = Modifier.clickable {
+                    selectedData?.value = ViewModelData.pressure
+                })
         }
         Row(Modifier
             .fillMaxWidth()
             .wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowDataBlock(ViewModelData.temperature, showDataValue = true, modifier = Modifier.clickable {
-                selectedData?.value = ViewModelData.temperature
-            })
+            ShowDataBlock(
+                ViewModelData.temperature,
+                showDataValue = true,
+                modifier = Modifier.clickable {
+                    selectedData?.value = ViewModelData.temperature
+                })
             ShowDataBlock(ViewModelData.steps, showDataValue = true, modifier = Modifier.clickable {
                 selectedData?.value = ViewModelData.steps
             })
@@ -99,9 +111,12 @@ fun SensorDataScreen(
         Row(Modifier
             .fillMaxWidth()
             .wrapContentWidth(Alignment.CenterHorizontally)){
-            ShowDataBlock(ViewModelData.airQuality, showDataValue = true, modifier = Modifier.clickable {
-                selectedData?.value = ViewModelData.airQuality
-            })
+            ShowDataBlock(
+                ViewModelData.airQuality,
+                showDataValue = true,
+                modifier = Modifier.clickable {
+                    selectedData?.value = ViewModelData.airQuality
+                })
             ShowDataBlock(ViewModelData.voc, showDataValue = true, modifier = Modifier.clickable {
                 selectedData?.value = ViewModelData.voc
             })
@@ -109,7 +124,7 @@ fun SensorDataScreen(
                 selectedData?.value = ViewModelData.co2
             })
         }
-        ShowDataBlock(selectedData.value){
+        ShowDataBlock(selectedData.value) {
             ShowGraph(selectedData.value)
         }
         val locationEnabled = ViewModelData.locationEnabled.observeAsState(false).value
@@ -117,7 +132,7 @@ fun SensorDataScreen(
             true -> MaterialTheme.colorScheme.primary
             false -> MaterialTheme.colorScheme.error
         }
-        ShowMap(Modifier.border(2.dp,color))
+        ShowMap(Modifier.border(2.dp, color))
     }
 }
 fun translate(value: Int): String {
@@ -194,7 +209,7 @@ fun ControlButtons(vm:ViewModel = viewModel()) {
             vm = vm,
             title = title,
             onDismissRequest = {
-                Log.d("dialog","called dismiss")
+                Log.d("dialog", "called dismiss")
                 showDialog.value = false
             }
         )
