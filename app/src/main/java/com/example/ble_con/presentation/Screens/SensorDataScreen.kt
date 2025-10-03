@@ -1,6 +1,7 @@
 package com.example.ble_con.presentation.Screens
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -11,21 +12,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ble_con.R
 import com.example.ble_con.ViewModel
 import com.example.ble_con.dataManager.repo.ConnectionStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
@@ -149,69 +154,51 @@ fun formatTime(time: Int):String {
 }
 @Composable
 fun ControlButtons(vm:ViewModel = viewModel()) {
-    var showDialog = remember { mutableStateOf(false) }
-
     Row(Modifier
         .fillMaxWidth()
-        .wrapContentWidth(Alignment.CenterHorizontally)){
+        .wrapContentWidth(Alignment.CenterHorizontally))
+    {
         val recordingStatus = ViewModelData.recordingStatus.observeAsState().value
-        val conStatus = ViewModelData.conStatus.observeAsState(ConnectionStatus.DISCONNECTED).value
+        val conStatus = ViewModelData.conStatus.observeAsState().value
 
-        val btn1_3_enabled = when(conStatus){
+        val btn1_enabled = when(conStatus){
             ConnectionStatus.CONNECTED -> true
             else -> false
         }
-        var text_start_stop = "Start"
-        var fun1 = {vm.startRecording()}
+        var resume_pause = R.drawable.resume_icon
 
-        var btn2_3_enabled = false
-        var resume_pause = "Pause"
+        var fun1 = {vm.toggleRecording()}
+
+        var btn2_3_enabled = true
 
         when(recordingStatus){
             RecordingStatus.RECORDING -> {
-                text_start_stop = "Stop"
-                fun1 = {vm.saveRecording()}
-
-                btn2_3_enabled = true
-                resume_pause = "Pause"
+                resume_pause = R.drawable.pause_icon
             }
             RecordingStatus.PAUSED ->{
-                text_start_stop = "Stop"
-                fun1 = {vm.stopRecording()}
-
-                btn2_3_enabled = true
-                resume_pause = "Resume"
+                resume_pause = R.drawable.resume_icon
             }
             RecordingStatus.STOPPED->{
-                text_start_stop = "Start"
-                fun1 = {vm.startRecording()}
-
                 btn2_3_enabled = false
-                resume_pause = "Resume"
+                resume_pause = R.drawable.resume_icon
+                fun1 = {vm.startRecording()}
             }
             else ->{}
         }
-        Button(fun1,enabled = btn1_3_enabled) {
-            Text(text = text_start_stop, color = Color.White)
+        TextButton(fun1,enabled = btn1_enabled) {
+            Image(
+                painterResource(resume_pause),
+                "Start/Resume/Pause",
+                Modifier
+                    .size(20.dp)
+            )
         }
-        Button({vm.toggleRecording()},enabled = btn2_3_enabled) {
-            Text(text = resume_pause, color = Color.White)
+        TextButton({vm.stopRecording()},enabled = btn2_3_enabled) {
+            Text(text = "Stop",color = MaterialTheme.colorScheme.primary,fontSize = 20.sp)
         }
-        Button({showDialog.value = true},enabled = btn2_3_enabled) {
-            Text(text = "Save", color = Color.White)
-        }
-    }
-    if(showDialog.value == true){
-        Log.d("dialog","showed dialog")
-        val title = "Add a name for Recording"
 
-        SaveRecordingDialog(
-            vm = vm,
-            title = title,
-            onDismissRequest = {
-                Log.d("dialog", "called dismiss")
-                showDialog.value = false
-            }
-        )
+        TextButton({vm.saveRecording()},enabled = btn2_3_enabled) {
+            Text(text = "Save", color = MaterialTheme.colorScheme.primary,fontSize = 20.sp)
+        }
     }
 }
