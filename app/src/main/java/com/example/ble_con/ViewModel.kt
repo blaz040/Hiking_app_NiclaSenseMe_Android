@@ -9,6 +9,7 @@ import androidx.lifecycle.application
 import com.example.ble_con.fileManager.FileManager
 import com.example.ble_con.dataManager.SensorDataManagerService
 import com.example.ble_con.dataManager.ble.BLEManager
+import com.example.ble_con.repository.ViewModelData
 
 class ViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -33,10 +34,17 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     fun resumeRecording() {
         SDMS_send(SensorDataManagerService.RECORDING_RESUME)
     }
+    fun saveRecording() {
+        SDMS_send(SensorDataManagerService.RECORDING_SAVE)
+    }
+    fun stopService(){
+        SDMS_send(SensorDataManagerService.STOP_SELF)
+    }
     fun saveRecording(fileName: String, callback: (Boolean)->Unit){
+        pauseRecording()
         if(file_api.save(fileName) == true) {
             callback(true)
-            SDMS_send(SensorDataManagerService.RECORDING_STOP)
+            stopRecording()
         }
         else{
             callback(false)
@@ -61,14 +69,10 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     fun disconnect() {
         SDMS_send(SensorDataManagerService.DEVICE_DISCONNECT)
     }
-    fun getAppContext():Context{
-        return application as Context
-    }
 
     fun deleteFile(fileName:String) = file_api.delete(fileName)
     fun loadFile(fileName:String) = file_api.loadFile(fileName)
     fun loadFileList() = file_api.notifyViewModelData()
-
     override fun onCleared() {
         disconnect()
         super.onCleared()

@@ -2,16 +2,43 @@ package com.example.ble_con.repository
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
 import com.example.ble_con.R
+import com.example.ble_con.dataManager.repo.ConnectionStatus
 import com.example.ble_con.fileManager.FileData
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SensorData
 
 @SuppressLint("MissingPermission")
 object ViewModelData {
+
+    class LiveDataWrapper<T>(
+        val init: T
+    ){
+        val mutableData = MutableLiveData<T>(init)
+        val liveData: LiveData<T> = mutableData
+
+        @Composable
+        fun observeAsState(value:T): State<T>{
+            return liveData.observeAsState(value)
+        }
+        @Composable
+        fun observeAsState(): State<T?>{
+            return liveData.observeAsState()
+        }
+        var value
+            get() = mutableData.value ?: init
+            set(v) = mutableData.postValue(v)
+
+        fun postValue(value:T){
+            mutableData.postValue(value)
+        }
+    }
     data class DataInfo(val name:String,val icon:Int,val postFix:String, val list:LiveData<MutableList<Point>>)
     val nothing = DataInfo("null",-1,"",SensorData.humidity.liveData)
 
@@ -26,50 +53,49 @@ object ViewModelData {
 
     val listOfDataInfo = listOf(humidity,temperature,pressure,steps,airQuality,voc,co2,altitude)
 
-    val _scanResultMap = MutableLiveData<MutableMap<String,ScanResult>>(mutableMapOf<String,ScanResult>())
-    val scanResultMap: MutableLiveData<MutableMap<String,ScanResult>> = _scanResultMap
+    val scanResultMap = LiveDataWrapper<MutableMap<String,ScanResult>>(mutableMapOf<String,ScanResult>())
 
-    private val _fileList = MutableLiveData<List<FileData>>(listOf())
-    val fileList: LiveData<List<FileData>> = _fileList
+    val selectedDevice= LiveDataWrapper<ScanResult?>(null)
 
-    val _selectedDevice: MutableLiveData<ScanResult?> = MutableLiveData<ScanResult?>(null)
-    val selectedDevice: LiveData<ScanResult?> = _selectedDevice
+    val fileList = LiveDataWrapper<List<FileData>>(listOf())
+
+    //private val _fileList = MutableLiveData<List<FileData>>(listOf())
+    //val fileList: LiveData<List<FileData>> = _fileList
 
     var fileData = FileData("null","null")
 
-    val _conStatus = MutableLiveData<String>("Disconnected")
-    val conStatus: LiveData<String> = _conStatus
+    val conStatus = LiveDataWrapper<String>(ConnectionStatus.DISCONNECTED)
 
-    val _recordingStatus = MutableLiveData<RecordingStatus>(RecordingStatus.STOPPED)
-    val recordingStatus: LiveData<RecordingStatus> = _recordingStatus
+    val recordingStatus = LiveDataWrapper<RecordingStatus>(RecordingStatus.STOPPED)
 
-    val _currentStatus = MutableLiveData<String>("null")
-    val currentStatus:LiveData<String> = _currentStatus
+//    val _currentStatus = MutableLiveData<String>("null")
+//    val currentStatus:LiveData<String> = _currentStatus
 
-    val time : LiveData<Int> = SensorData._time
+    val time = LiveDataWrapper<Int>(SensorData.time)
 
-    val _scanningStatus = MutableLiveData<Boolean>(false)
-    val scanningStatus: LiveData<Boolean> = _scanningStatus
+    val scanningStatus = LiveDataWrapper<Boolean>(false)
+
+    val locationEnabled = LiveDataWrapper<Boolean>(false)
 
     fun addScanResult(result: ScanResult) {
-        if(_scanResultMap.value != null) {
-            if (!_scanResultMap.value.containsKey(result.device.name)) {
-                val map = _scanResultMap.value.toMutableMap().apply { put(result.device.name, result) }
-                _scanResultMap.value = map
+        if(scanResultMap.value != null) {
+            if (!scanResultMap.value.containsKey(result.device.name)) {
+                val map = scanResultMap.value.toMutableMap().apply { put(result.device.name, result) }
+                scanResultMap.value = map
             }
         }
         else {
             val map = mutableMapOf<String,ScanResult>().apply { put(result.device.name,result) }
-            _scanResultMap.value = (map)
+            scanResultMap.value = (map)
         }
     }
     fun clearScanResult(){
-        val map = _scanResultMap.value.toMutableMap().apply{ clear() }
-        _scanResultMap.value = map
+        val map = scanResultMap.value.toMutableMap().apply{ clear() }
+        scanResultMap.value = map
     }
 
-    fun updateFileList(list:List<FileData>) = _fileList.postValue(list)
+    fun updateFileList(list:List<FileData>) = fileList.postValue(list)
 
-    fun setSelectedDevice(result: ScanResult?) = _selectedDevice.postValue(result)
-    fun setConnectionStatus(status: String) = _conStatus.postValue(status)
+    fun setSelectedDevice(result: ScanResult?) = selectedDevice.postValue(result)
+    fun setConnectionStatus(status: String) = conStatus.postValue(status)
 }

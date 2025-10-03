@@ -1,8 +1,10 @@
-package com.example.ble_con.presentation.MainScreen
+package com.example.ble_con.presentation.Screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ble_con.ViewModel
+import com.example.ble_con.presentation.MyHorizontalDivider
 import com.example.ble_con.repository.Routes
 import com.example.ble_con.repository.ViewModelData
 
@@ -87,13 +90,18 @@ fun ControlButtons(
 @SuppressLint("MissingPermission")
 @Composable
 fun GenScanResults(vm: ViewModel = viewModel())
-{
-    Column(Modifier.padding(5.dp).sizeIn(300.dp,200.dp,300.dp,300.dp).border(2.dp,color = Color.Black,shape = RoundedCornerShape(10.dp))) {
+{   val scroll = rememberScrollState()
+    Column(Modifier
+        .padding(5.dp)
+        .sizeIn(300.dp,200.dp,300.dp,300.dp)
+        .border(2.dp,color = Color.Black,shape = RoundedCornerShape(10.dp))
+        .verticalScroll(state = scroll)
+    ) {
         var first = true
         val scanResults = ViewModelData.scanResultMap.observeAsState().value
         if(scanResults != null) for (result in scanResults.values) {
             if(!first){
-                HorizontalDivider(thickness = 2.dp)
+                MyHorizontalDivider()
             }
             first = false
             Box(

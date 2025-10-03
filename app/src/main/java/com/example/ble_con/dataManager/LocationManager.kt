@@ -3,6 +3,7 @@ package com.example.ble_con.dataManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import com.example.ble_con.repository.ViewModelData
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -20,11 +21,11 @@ class LocationManager(
     val onLocationReceived: (LatLng) ->Unit,
     val delay_ms:Long = 5000
 ) {
-    private val TAG = "LocationManager"
-
     private var run = false
+    private var locationClient: FusedLocationProviderClient? = null
     private var timerJob: Job? = null
-    private var locationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+
+    private val TAG = "LocationManager"
 
     fun start() {
         Log.d(TAG,"Starting...")
@@ -33,9 +34,18 @@ class LocationManager(
 
     private fun startTracking() {
         timerJob?.cancel()
+
+        locationClient = LocationServices.getFusedLocationProviderClient(context)
+
         run = true
         timerJob = serviceScope.launch {
             while(true) {
+                // checks location avaliability and updates it to ViewModelData / UI
+                locationClient?.locationAvailability?.addOnCompleteListener {location ->
+                    val ch = location.result.isLocationAvailable()
+                    ViewModelData.locationEnabled.postValue(ch)
+                    Log.d(TAG,"location is: $ch")
+                }
                 if (run) {
                     locationClient?.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY,null)?.addOnSuccessListener { location->
                         if(location != null){

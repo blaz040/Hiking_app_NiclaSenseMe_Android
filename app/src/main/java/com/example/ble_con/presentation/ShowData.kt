@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.ble_con.dataManager.repo.SensorData
+import com.example.ble_con.presentation.Screens.ControlButtons
+import com.example.ble_con.presentation.Screens.GenScanResults
+import com.example.ble_con.presentation.Screens.StatusInfo
 import com.example.ble_con.repository.ViewModelData
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -40,7 +43,7 @@ import kotlin.collections.toList
 
 
 @Composable
-fun ShowMap() {
+fun ShowMap(modifier: Modifier = Modifier) {
     val locationList = SensorData.location.liveData.observeAsState().value
     var startLocation = when(locationList!!.isEmpty()) {
         true -> LatLng(46.05,14.50)// Ljubljana
@@ -54,7 +57,7 @@ fun ShowMap() {
         true -> CameraPositionState(CameraPosition.fromLatLngZoom(startLocation, 20f))
     }
     GoogleMap(
-        modifier = Modifier
+        modifier = modifier
             .height(300.dp)
             .fillMaxWidth(),
         cameraPositionState = cameraPositionState,
@@ -109,4 +112,8 @@ fun ShowDataBlock(data: ViewModelData.DataInfo, modifier: Modifier = Modifier, s
 fun ShowGraph(data: ViewModelData.DataInfo) {
     if(data.name == ViewModelData.nothing.name) return
     Graph(data.list)
+}
+@Composable
+fun MyHorizontalDivider(){
+    HorizontalDivider(thickness = 5.dp,color = MaterialTheme.colorScheme.inversePrimary)
 }

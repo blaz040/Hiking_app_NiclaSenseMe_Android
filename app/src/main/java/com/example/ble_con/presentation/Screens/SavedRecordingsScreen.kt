@@ -1,4 +1,4 @@
-package com.example.ble_con.presentation.SavedRecordingsScreen
+package com.example.ble_con.presentation.Screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +28,7 @@ import androidx.navigation.NavController
 import com.example.ble_con.fileManager.FileData
 import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.ViewModel
+import com.example.ble_con.presentation.MyHorizontalDivider
 import com.example.ble_con.repository.Routes
 import com.example.ble_con.repository.ViewModelData
 
@@ -102,8 +101,4 @@ fun DisplayTitle(title:String = "Saved Recordings"){
         Text(title, fontSize = 30.sp, color = MaterialTheme.colorScheme.onPrimary)
     }
     MyHorizontalDivider()
-}
-@Composable
-fun MyHorizontalDivider(){
-    HorizontalDivider(thickness = 5.dp,color = MaterialTheme.colorScheme.inversePrimary)
 }

@@ -24,8 +24,9 @@ class WeatherApiManager(
     private val retrofitService: WeatherApiInterface by lazy {
         retrofit.create(WeatherApiInterface::class.java)
     }
-    private val delay_ms:Long = 1000
+    private val delay_ms:Long = 5000
     fun getWeatherData(){
+        var stop = false
         coroutineScope.launch {
             try {
                 val response = retrofitService.getWeather()
@@ -34,9 +35,15 @@ class WeatherApiManager(
                 SnackbarManager.send("got weather data :${response.current.pressure_msl} hPa, ${response.current.temperature_2m} C", duration = SnackbarDuration.Long)
             }catch (e: Exception){
                 Log.e("WEATHER","Trying again in ${delay_ms/1000}s : "+e.toString())
-                SnackbarManager.send("Failed to get weather data Trying again in ${delay_ms/1000} s", duration = SnackbarDuration.Long)
+                SnackbarManager.send(
+                    "Failed to get weather data Trying again in ${delay_ms/1000} s",
+                    duration = SnackbarDuration.Long,
+                    label = "Stop",
+                    {
+                    stop = true
+                    })
                 delay(delay_ms)
-                getWeatherData()
+                if(!stop) getWeatherData()
             }
         }
     }
