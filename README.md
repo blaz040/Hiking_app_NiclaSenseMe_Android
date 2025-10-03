@@ -1,3 +1,4 @@
 # Hiking App with Nicla Sense Me, Android studio
 
-Here is an android studio project 
+## Installation
+Downaload this git and then import Project in Android Studio
