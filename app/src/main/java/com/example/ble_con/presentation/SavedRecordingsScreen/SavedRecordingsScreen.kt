@@ -30,6 +30,7 @@ import androidx.navigation.NavController
 import com.example.ble_con.fileManager.FileData
 import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.ViewModel
+import com.example.ble_con.presentation.MyHorizontalDivider
 import com.example.ble_con.repository.Routes
 import com.example.ble_con.repository.ViewModelData
 
@@ -102,8 +103,4 @@ fun DisplayTitle(title:String = "Saved Recordings"){
         Text(title, fontSize = 30.sp, color = MaterialTheme.colorScheme.onPrimary)
     }
     MyHorizontalDivider()
-}
-@Composable
-fun MyHorizontalDivider(){
-    HorizontalDivider(thickness = 5.dp,color = MaterialTheme.colorScheme.inversePrimary)
 }

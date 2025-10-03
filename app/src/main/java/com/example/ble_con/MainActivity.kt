@@ -13,6 +13,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 import com.example.ble_con.presentation.Navigation
 import com.example.ble_con.ui.theme.AppTheme
 
@@ -26,7 +28,6 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         Log.d(TAG,"onCreate....")
 
@@ -44,24 +45,24 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy(){
         super.onDestroy()
-        Log.d(TAG,"onDestroy.....")
+        Log.d(TAG,"onDestroy...")
         unregisterReceiver(mReceiver)
     }
     override fun onStart() {
         super.onStart()
-        Log.d(TAG,"onStart....")
+        Log.d(TAG,"onStart...")
         requestBLEPermission()
         showBluetoothDialog()
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG,"onPause....")
+        Log.d(TAG,"onPause...")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG,"onResume....")
+        Log.d(TAG,"onResume...")
     }
     private fun showLocationDialog() {
         requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)

@@ -15,7 +15,6 @@ import android.content.Intent
 import android.util.Log
 import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
-import com.example.ble_con.dataManager.repo.ConStatus
 import com.example.ble_con.dataManager.repo.SensorData
 import com.example.ble_con.dataManager.repo.add
 import com.example.ble_con.repository.ViewModelData
@@ -51,10 +50,9 @@ class BLEManager(
     private val bluetoothAdapter by lazy { bluetoothManager.adapter}
     private val bluetoothLeScanner by lazy { bluetoothAdapter.bluetoothLeScanner }
 
-    private var scanning = ViewModelData._scanningStatus
+    private var scanning = ViewModelData.scanningStatus
     private val handler = android.os.Handler()
 
-    private val connectionStatus = ViewModelData._conStatus
 
     // Stops scanning after 10 seconds.
      private val SCAN_PERIOD: Long = 10000
@@ -121,14 +119,12 @@ class BLEManager(
                     gatt.discoverServices()
 
                     broadcastUpdate(BluetoothBroadcastAction.CONNECTED)
-                    connectionStatus.postValue(ConStatus.CONNECTED)
 
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // Device disconnected
                     Log.d("GATT_CONN", "Disconnected from GATT server.")
 
                     broadcastUpdate(BluetoothBroadcastAction.DISCONNECTED)
-                    connectionStatus.postValue(ConStatus.DISCONNECTED)
 
                     closeConnection()
                 }
@@ -207,7 +203,8 @@ class BLEManager(
 
     fun calcAltitude(pressure: Float): Float {
         val sea_press = SensorData.seaLevelPressure
-        val temp = SensorData.temperature.getList().last().y
+        val temp = SensorData.seaLevelTemperature
+        //val temp = SensorData.temperature.getList().last().y
         return round((((sea_press / pressure).pow(1 / 5.257f) - 1.0f) * (temp + 273.15f)) / 0.0065f)
     }
     fun onDataReceived(char: BluetoothGattCharacteristic) {

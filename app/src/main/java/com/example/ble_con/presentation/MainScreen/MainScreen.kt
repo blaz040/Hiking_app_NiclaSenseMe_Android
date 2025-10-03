@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ble_con.ViewModel
+import com.example.ble_con.presentation.MyHorizontalDivider
 import com.example.ble_con.repository.Routes
 import com.example.ble_con.repository.ViewModelData
 
@@ -93,7 +94,7 @@ fun GenScanResults(vm: ViewModel = viewModel())
         val scanResults = ViewModelData.scanResultMap.observeAsState().value
         if(scanResults != null) for (result in scanResults.values) {
             if(!first){
-                HorizontalDivider(thickness = 2.dp)
+                MyHorizontalDivider()
             }
             first = false
             Box(

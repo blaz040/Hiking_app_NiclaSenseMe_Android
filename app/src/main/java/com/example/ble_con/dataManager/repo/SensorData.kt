@@ -3,6 +3,7 @@ package com.example.ble_con.dataManager.repo
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
 import com.example.ble_con.R
+import com.example.ble_con.repository.ViewModelData
 import com.example.ble_con.repository.ViewModelData.DataInfo
 import com.google.android.gms.maps.model.LatLng
 
@@ -31,13 +32,14 @@ object SensorData {
         "Location"      to location,
     )
     
-    val _time: MutableLiveData<Int> = MutableLiveData(0)
+    var time:Int = 0
 
     var seaLevelPressure = 1013.25f // default value
     var seaLevelTemperature = 20.0f // default value
 
     fun updateTime(value:Int) {
-        _time.postValue(value)
+        time = value
+        ViewModelData.time.postValue(time)
     }
     fun clearData(){
         temperature.clear()

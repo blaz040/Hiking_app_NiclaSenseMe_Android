@@ -16,11 +16,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.ViewModel
+import com.example.ble_con.dataManager.repo.ConnectionStatus
+import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.presentation.AnalyzeScreen.AnalyzeScreen
 import com.example.ble_con.presentation.MainScreen.MainScreen
 import com.example.ble_con.presentation.SavedRecordingsScreen.SavedRecordingsScreen
 import com.example.ble_con.presentation.SensorDataScreen.SensorDataScreen
 import com.example.ble_con.repository.Routes
+import com.example.ble_con.repository.ViewModelData
 
 @Composable
 fun Navigation(
@@ -39,25 +42,7 @@ fun Navigation(
             if(result == SnackbarResult.ActionPerformed){
                 event.action!!.callback()
             }
-            //SnackbarManager.next()
         }
-        /*
-        SnackbarManager.snackbarMessage.collect { event->
-            SnackbarManager.snackbarMessage.value = SnackbarEvent("",null, SnackbarManager.defaultDuration)
-
-            if(event.message != ""){
-                val result = snackbarHostState.showSnackbar(
-                    message = event.message,
-                    withDismissAction = true,
-                    actionLabel = event.action?.label,
-                    duration = event.duration
-                )
-                if(result == SnackbarResult.ActionPerformed){
-                    event.action!!.callback()
-                }
-            }
-        }
-        */
     }
     Scaffold(
         snackbarHost = {
@@ -65,8 +50,10 @@ fun Navigation(
         }
     ) { contentPadding ->
         val navController = rememberNavController()
-        NavHost(navController = navController, startDestination = Routes.MainScreen,
-            modifier = Modifier.padding(contentPadding))
+        NavHost(
+            navController = navController, startDestination = Routes.MainScreen,
+            modifier = Modifier.padding(contentPadding)
+        )
         {
             composable(Routes.MainScreen) {
                 MainScreen(navController = navController, vm)
@@ -74,12 +61,36 @@ fun Navigation(
             composable(Routes.RecordingScren) {
                 SensorDataScreen(vm)
             }
-            composable(Routes.SavedRecordingsScreen){
+            composable(Routes.SavedRecordingsScreen) {
                 vm.loadFileList()
-                SavedRecordingsScreen(navController = navController,vm = vm)
+                SavedRecordingsScreen(navController = navController, vm = vm)
             }
-            composable(Routes.AnalyzeScreen){
+            composable(Routes.AnalyzeScreen) {
                 AnalyzeScreen(vm)
+            }
+        }
+        val recordingStatus = ViewModelData.recordingStatus.observeAsState().value
+        if (recordingStatus == RecordingStatus.SAVING){
+            if( ViewModelData.conStatus.value == ConnectionStatus.DISCONNECTED ){
+                val title = "device disconnected while Recording, give a name for Recording"
+                SaveRecordingDialog(
+                    vm = vm,
+                    title = title,
+                    onDismissRequest = {
+                        vm.stopRecording()
+                        ViewModelData.conStatus.value = ConnectionStatus.DISCONNECTED
+                    }
+                )
+            }
+            else if(ViewModelData.conStatus.value == ConnectionStatus.CONNECTED){
+                val title = "Add a name for this Recording"
+                SaveRecordingDialog(
+                    vm = vm,
+                    title = title,
+                    onDismissRequest = {
+                        vm.stopRecording()
+                    }
+                )
             }
         }
     }

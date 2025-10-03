@@ -87,10 +87,10 @@ class BLEService: Service(){
             Log.d(TAG,"Received Action ${intent?.action}")
             when(intent?.action){
                 BluetoothBroadcastAction.CONNECTED -> {
-                //    ViewModelData.setConnectionStatus(ConStatus.CONNECTED)
+                //    ViewModelData.setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
                 BluetoothBroadcastAction.DISCONNECTED -> {
-                 //   ViewModelData.setConnectionStatus(ConStatus.DISCONNECTED)
+                 //   ViewModelData.setConnectionStatus(ConnectionStatus.DISCONNECTED)
                     disconnect()
                     stopSelf()
                 }

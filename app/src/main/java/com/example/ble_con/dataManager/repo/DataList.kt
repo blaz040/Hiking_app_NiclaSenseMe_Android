@@ -3,7 +3,8 @@ package com.example.ble_con.dataManager.repo
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import co.yml.charts.common.model.Point
-import com.example.ble_con.dataManager.repo.SensorData._time
+import com.example.ble_con.dataManager.repo.SensorData
+
 import com.google.android.gms.maps.model.LatLng
 
 class DataList<T>{
@@ -35,7 +36,7 @@ fun DataList<Point>.add(value: Point){
 }
 fun <T:Number>DataList<Point>.add(value: T){
     val list = this.mutableList
-    val currentTime = _time.value.toFloat()
+    val currentTime = SensorData.time.toFloat()
 
     if(list.size >= maxListSize)
         list?.removeAt(0)

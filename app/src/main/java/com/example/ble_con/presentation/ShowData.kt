@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +41,7 @@ import kotlin.collections.toList
 
 
 @Composable
-fun ShowMap() {
+fun ShowMap(modifier: Modifier = Modifier) {
     val locationList = SensorData.location.liveData.observeAsState().value
     var startLocation = when(locationList!!.isEmpty()) {
         true -> LatLng(46.05,14.50)// Ljubljana
@@ -54,7 +55,7 @@ fun ShowMap() {
         true -> CameraPositionState(CameraPosition.fromLatLngZoom(startLocation, 20f))
     }
     GoogleMap(
-        modifier = Modifier
+        modifier = modifier
             .height(300.dp)
             .fillMaxWidth(),
         cameraPositionState = cameraPositionState,
@@ -109,4 +110,8 @@ fun ShowDataBlock(data: ViewModelData.DataInfo, modifier: Modifier = Modifier, s
 fun ShowGraph(data: ViewModelData.DataInfo) {
     if(data.name == ViewModelData.nothing.name) return
     Graph(data.list)
+}
+@Composable
+fun MyHorizontalDivider(){
+    HorizontalDivider(thickness = 5.dp,color = MaterialTheme.colorScheme.inversePrimary)
 }

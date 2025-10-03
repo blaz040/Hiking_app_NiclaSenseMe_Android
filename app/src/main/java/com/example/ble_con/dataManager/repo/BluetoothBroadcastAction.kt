@@ -1,6 +1,6 @@
 package com.example.ble_con.dataManager.repo
 
 object BluetoothBroadcastAction {
-    const val DISCONNECTED = ConStatus.DISCONNECTED
-    const val CONNECTED = ConStatus.CONNECTED
+    const val DISCONNECTED = ConnectionStatus.DISCONNECTED
+    const val CONNECTED = ConnectionStatus.CONNECTED
 }

@@ -18,7 +18,7 @@ import com.example.ble_con.dataManager.ble.BLEManager
 import com.example.ble_con.dataManager.network.WeatherApiManager
 import com.example.ble_con.dataManager.network.data.WeatherResponse
 import com.example.ble_con.dataManager.repo.BluetoothBroadcastAction
-import com.example.ble_con.dataManager.repo.ConStatus
+import com.example.ble_con.dataManager.repo.ConnectionStatus
 import com.example.ble_con.dataManager.repo.RecordingStatus
 import com.example.ble_con.dataManager.repo.SendCommand
 import com.example.ble_con.dataManager.repo.SensorData
@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import java.sql.Connection
 
 @SuppressLint("MissingPermission")
 class SensorDataManagerService: Service(){
@@ -48,9 +49,9 @@ class SensorDataManagerService: Service(){
     private val ble_notificationID = 1
     private val recording_notificationID = 2
 
-    private val connectionStatus = ViewModelData._conStatus
-    private val recordingStatus = ViewModelData._recordingStatus
-    private val connected_device = ViewModelData._selectedDevice
+    private val connectionStatus = ViewModelData.conStatus
+    private val recordingStatus = ViewModelData.recordingStatus
+    private val connected_device = ViewModelData.selectedDevice
 
     private val binder = LocalBinder()
 
@@ -62,9 +63,11 @@ class SensorDataManagerService: Service(){
             DEVICE_DISCONNECT -> disconnect()
             RECORDING_START   -> startRecording()
             RECORDING_STOP    -> stopRecording()
+            RECORDING_SAVE    -> saveRecording()
             RECORDING_PAUSE   -> pauseRecording()
             RECORDING_RESUME  -> resumeRecording()
             RECORDING_TOGGLE  -> toggleRecording()
+            STOP_SELF         -> terminate()
             else -> Log.e(TAG,"Wrong action for SensorDataManagerService")
         }
         return super.onStartCommand(intent, flags, startId)
@@ -74,7 +77,7 @@ class SensorDataManagerService: Service(){
     }
 
     private fun connect(intent: Intent) {
-        if(connectionStatus.value == ConStatus.CONNECTED) {
+        if(connectionStatus.value == ConnectionStatus.CONNECTED) {
             disconnect()
         }
 
@@ -96,12 +99,16 @@ class SensorDataManagerService: Service(){
         startForeground(ble_notificationID,ble_builder)
     }
     private fun disconnect() {
-        if(recordingStatus.value != RecordingStatus.STOPPED) stopRecording()
+        pauseRecording()
         connected_device.postValue(null)
         ble_api.disconnect()
         Log.d(TAG,"DISCONNECTED")
     }
-
+    private fun terminate(){
+        stopRecording()
+        disconnect()
+        stopSelf()
+    }
     private fun send(intent: Intent) {
         val command: Int = intent.getIntExtra("command",0)
         ble_api.send(command)
@@ -116,12 +123,12 @@ class SensorDataManagerService: Service(){
 
         mNotificationManager = NotificationManager(this,recording_notificationID,record_timer_notify_builder)
 
-        recordingStatus.postValue(RecordingStatus.RUNNING)
+        recordingStatus.postValue(RecordingStatus.RECORDING)
 
         ble_api.send(SendCommand.START)
         location_api.start()
         recording_api.start()
-        SnackbarManager.send("Recording started")
+       // SnackbarManager.send("Recording started")
     }
     private fun stopRecording() {
         recordingStatus.postValue(RecordingStatus.STOPPED)
@@ -132,46 +139,50 @@ class SensorDataManagerService: Service(){
         ble_api.send(SendCommand.STOP)
         location_api.stop()
         recording_api.stop()
-        SnackbarManager.send("Recording stopped")
+       // SnackbarManager.send("Recording stopped")
+    }
+    private fun saveRecording() {
+        pauseRecording()
+        recordingStatus.postValue(RecordingStatus.SAVING)
     }
     private fun pauseRecording(){
-        if(recordingStatus.value == RecordingStatus.RUNNING) { //PAUSING recording
+        if(recordingStatus.value == RecordingStatus.RECORDING) { //PAUSING recording
             ble_api.send(SendCommand.STOP)
             recordingStatus.value = RecordingStatus.PAUSED
 
             location_api.toggleRun()
             recording_api.toggleRun()
 
-            SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
+           // SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
         }
     }
     private fun resumeRecording(){
         if(recordingStatus.value == RecordingStatus.PAUSED){ // RESUMING recording
             ble_api.send(SendCommand.START)
-            recordingStatus.value = RecordingStatus.RUNNING
+            recordingStatus.value = RecordingStatus.RECORDING
 
             location_api.toggleRun()
             recording_api.toggleRun()
 
-            SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
+           // SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
         }
     }
     private fun toggleRecording() {
         when(recordingStatus.value) {
-            RecordingStatus.RUNNING -> { //PAUSING recording
+            RecordingStatus.RECORDING -> { //PAUSING recording
                 ble_api.send(SendCommand.STOP)
                 recordingStatus.value = RecordingStatus.PAUSED
             }
             RecordingStatus.PAUSED -> { // RESUMING recording
                 ble_api.send(SendCommand.START)
-                recordingStatus.value = RecordingStatus.RUNNING
+                recordingStatus.value = RecordingStatus.RECORDING
             }
             else -> { Log.e(TAG,"ERROR toggleRecording ") }
         }
         location_api.toggleRun()
         recording_api.toggleRun()
 
-        SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
+        //SnackbarManager.send("Recording toggled: ${recordingStatus.value}")
     }
 
     private fun translate(value: Int): String {
@@ -204,11 +215,19 @@ class SensorDataManagerService: Service(){
             when(intent?.action){
                 BluetoothBroadcastAction.CONNECTED -> {
                     SnackbarManager.send("device Connected")
+                    connectionStatus.postValue(ConnectionStatus.CONNECTED)
                 }
                 BluetoothBroadcastAction.DISCONNECTED -> {
-                    disconnect()
-                    stopSelf()
                     SnackbarManager.send("device Disconnected")
+                    connectionStatus.postValue(ConnectionStatus.DISCONNECTED)
+
+                    disconnect()
+
+                    if(recordingStatus.value != RecordingStatus.STOPPED)
+                        recordingStatus.postValue( RecordingStatus.SAVING )
+                    else {
+                       stopSelf()
+                    }
                 }
             }
         }
@@ -240,6 +259,7 @@ class SensorDataManagerService: Service(){
     companion object {
         val RECORDING_START = "start"
         val RECORDING_STOP = "stop"
+        val RECORDING_SAVE = "save"
         val DEVICE_CONNECT = "connect"
         val DEVICE_DISCONNECT = "disconnect"
         val BLE_SCAN = "scan"
@@ -248,6 +268,7 @@ class SensorDataManagerService: Service(){
         val RECORDING_RESUME = "resume"
         val RECORDING_RESTART = "restart"
         val RECORDING_TOGGLE = "toggle"
+        val STOP_SELF = "stop self"
     }
 
 }
