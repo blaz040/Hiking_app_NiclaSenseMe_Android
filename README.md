@@ -6,15 +6,15 @@ Downaload and then in ``Android Studio``: ``New``->``import Project``->``Select 
 
 ## Phone installation
 First finnish ``Android studio, installation``, then:
-  1. ``Build``->``Generate App Bundles or APKs`` ->``Generate APKs``
-  2. After building, a notification should appear in ``Android studio`` and click ``locate`` on the notification.
-  3. There you will se ``apk file``.
-  4. Install it on ``Android phone``
+  1. ``Build``->``Generate App Bundles or APKs`` ->``Generate APKs``,
+  2. After building, a notification should appear in ``Android studio`` and click ``locate`` on the notification,
+  3. There you will se ``apk file``,
+  4. Install it on ``Android phone``.
 ## Google API key for Map
 To show map in application follow these steps:
 
-1. get API key for ``Maps SDK``. To do so follow [this documentation](https://developers.google.com/maps/get-started),
+1. Get API key for ``Maps SDK``. To do so follow [this documentation](https://developers.google.com/maps/get-started),
 2. When you have an API key. Create ``secrets.properties`` in the same folder as ``locals.properties``,
-3. In ``secrects.properties`` file add ``MAPS_API_KEY=<your api key>``
+3. In ``secrects.properties`` file add ``MAPS_API_KEY=<your api key>``.
 
 Now you should have access to the map
