@@ -1,5 +1,5 @@
 # Hiking App with Nicla Sense Me, Android studio
-This is a repository of Android studio side of Hikking app
+This is a repository of Android side of Hikking app
 
 ## Android Studio, installation
 Downaload and then in ``Android Studio``: ``New``->``import Project``->``Select the downloaded file``.
