@@ -16,6 +16,7 @@ class DataList<T>{
 
     fun clear(){
         mutableList.clear()
+        mutableLiveDataList.postValue( mutableList.toMutableList() )
     }
     fun getList(): List<T> {
         return mutableList.toList()

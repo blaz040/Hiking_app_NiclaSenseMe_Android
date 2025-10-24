@@ -44,12 +44,13 @@ fun AnalyzeScreen(
 
             val showGraph = remember { mutableStateOf(false) }
             ShowDataBlock(
-                data, modifier = Modifier.Companion
+                data,
+                modifier = Modifier.Companion
                     .width(500.dp)
                     .noRippleClickable{
                        showGraph.value = !showGraph.value
                     }
-                    ) {
+            ) {
                 if (showGraph.value == true)
                     ShowGraph(data)
 

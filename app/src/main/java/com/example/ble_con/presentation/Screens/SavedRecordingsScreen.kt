@@ -55,9 +55,8 @@ fun SavedRecordingsScreen(
                 file_data,
                 (selectedFile.value.name == file_data.name),
                 onLoadClick = {
-                    SnackbarManager.send("Loading Files....")
-                    vm.loadFile(file_data.name);
                     navController.navigate(Routes.AnalyzeScreen)
+                    vm.loadFile(file_data.name)
                 },
                 onDeleteClick = {
                     SnackbarManager.send("Deleted file ${file_data.name}")
