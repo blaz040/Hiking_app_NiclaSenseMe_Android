@@ -6,10 +6,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
+import androidx.lifecycle.viewModelScope
+import com.example.ble_con.Snackbar.SnackbarManager
 import com.example.ble_con.fileManager.FileManager
 import com.example.ble_con.dataManager.SensorDataManagerService
 import com.example.ble_con.dataManager.ble.BLEManager
 import com.example.ble_con.repository.ViewModelData
+import kotlinx.coroutines.launch
 
 class ViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -71,7 +74,11 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteFile(fileName:String) = file_api.delete(fileName)
-    fun loadFile(fileName:String) = file_api.loadFile(fileName)
+    // TODO add this to coroutine
+    fun loadFile(fileName:String){
+        SnackbarManager.send("Loading Files....")
+        file_api.loadFile(fileName)
+    }
     fun loadFileList() = file_api.notifyViewModelData()
     override fun onCleared() {
         disconnect()

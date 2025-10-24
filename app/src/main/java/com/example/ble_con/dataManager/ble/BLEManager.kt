@@ -203,7 +203,7 @@ class BLEManager(
 
     fun calcAltitude(pressure: Float): Float {
         val sea_press = SensorData.seaLevelPressure
-        val temp = SensorData.seaLevelTemperature
+        val temp     = SensorData.seaLevelTemperature
         //val temp = SensorData.temperature.getList().last().y
         return round((((sea_press / pressure).pow(1 / 5.257f) - 1.0f) * (temp + 273.15f)) / 0.0065f)
     }

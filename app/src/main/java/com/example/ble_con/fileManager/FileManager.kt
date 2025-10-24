@@ -130,25 +130,26 @@ class FileManager(
         return list.toList()
     }
 
-    fun loadFile(fileName: String){
-        val file = getFileFromName(fileName)
+     fun loadFile(fileName: String){
+        scope.launch {
+            val file = getFileFromName(fileName)
 
-        ViewModelData.fileData = getFileDataFromName(fileName)
+            ViewModelData.fileData = getFileDataFromName(fileName)
 
-        val out = json.decodeFromString<SensorDataBundle>(readAll(file))
-        Log.d(TAG,"$out")
+            val out = json.decodeFromString<SensorDataBundle>(readAll(file))
+            Log.d(TAG,"$out")
 
-
-        SensorData.clearData()
-        out.temperature.forEach { SensorData.temperature.add(it) }
-        out.humidity.forEach { SensorData.humidity.add(it) }
-        out.pressure.forEach { SensorData.pressure.add(it) }
-        out.steps.forEach { SensorData.steps.add(it) }
-        out.iaq.forEach { SensorData.iaq.add(it) }
-        out.voc.forEach { SensorData.voc.add(it) }
-        out.co2.forEach { SensorData.co2.add(it) }
-        out.altitude.forEach { SensorData.altitude.add(it) }
-        out.location.forEach { SensorData.location.add(it) }
+            SensorData.clearData()
+            out.temperature.forEach { SensorData.temperature.add(it) }
+            out.humidity.forEach { SensorData.humidity.add(it) }
+            out.pressure.forEach { SensorData.pressure.add(it) }
+            out.steps.forEach { SensorData.steps.add(it) }
+            out.iaq.forEach { SensorData.iaq.add(it) }
+            out.voc.forEach { SensorData.voc.add(it) }
+            out.co2.forEach { SensorData.co2.add(it) }
+            out.altitude.forEach { SensorData.altitude.add(it) }
+            out.location.forEach { SensorData.location.add(it) }
+        }
     }
     fun notifyViewModelData(){
         ViewModelData.updateFileList(getFileList())

@@ -77,12 +77,14 @@ class SensorDataManagerService: Service(){
     }
 
     private fun connect(intent: Intent) {
+        val result = intent.getParcelableExtra("ScanResult") as ScanResult?
+        if(result?.device?.name == connected_device.value?.device?.name)
+            return
         if(connectionStatus.value == ConnectionStatus.CONNECTED) {
             disconnect()
         }
 
         Log.d(TAG,"CONNECTING...")
-        val result = intent.getParcelableExtra("ScanResult") as ScanResult?
 
         connected_device.postValue(result)
         result?.let { ble_api.connectToDevice(result.device) }
@@ -114,6 +116,7 @@ class SensorDataManagerService: Service(){
         ble_api.send(command)
     }
     private fun startRecording() {
+
         weather_api.getWeatherData()
 
         clearData()
