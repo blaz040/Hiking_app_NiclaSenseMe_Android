@@ -5,7 +5,7 @@ This is a repository of Android side of Hikking app
 Downaload and then in ``Android Studio``: ``New``->``import Project``->``Select the downloaded file``.
 
 ## Phone installation
-First finnish ``Android studio, installation``, then:
+First finnish ``Android studio, installation`` and ``Google API key for Map``, then:
   1. ``Build``->``Generate App Bundles or APKs`` ->``Generate APKs``,
   2. After building, a notification should appear in ``Android studio`` and click ``locate`` on the notification,
   3. There you will se ``apk file``,
