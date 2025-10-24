@@ -1,9 +1,11 @@
 # Hiking App with Nicla Sense Me, Android studio
 This is a repository of Android studio side of Hikking app
 
-## Installation
+## Android Studio, installation
 Downaload and then in ``Android Studio``: ``New``->``import Project``->``Select the downloaded file``.
 
+## Phone installation
+Download the ``Hiking_app.apk`` under the ``Release``->``Android apk``
 ## Google API key for Map
 To show map in application follow these steps:
 
